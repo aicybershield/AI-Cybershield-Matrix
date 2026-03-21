@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UEBA Simulator - AI CyberShield</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- GLOBAL THEME --- */
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #00aaff; /* Purple for Behavioral/Psychology */
+            --accent-hover: #8800cc;
+            --danger: #ff4444;
+            --safe: #00ff88;
+            --text-main: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --border: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar {
+            padding: 1rem 5%;
+            background-color: var(--card-bg);
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; }
+        .back-btn { color: var(--text-muted); text-decoration: none; transition: 0.3s; }
+        .back-btn:hover { color: var(--accent); }
+
+        .container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+        }
+
+        .header-section { text-align: center; margin-bottom: 2.5rem; }
+        .header-section h1 { font-size: 2.5rem; color: #fff; margin-bottom: 0.5rem; }
+        .header-section span { color: var(--accent); }
+        .header-section p { color: var(--text-muted); }
+
+        /* --- FORM CARD --- */
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        select, input {
+            padding: 12px;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(170, 0, 255, 0.2);
+        }
+
+        /* Results Area */
+        .result-box {
+            margin-top: 2rem;
+            background: #151515;
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent);
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .badge-CRITICAL { background: rgba(255, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .badge-NORMAL { background: rgba(0, 255, 136, 0.2); color: var(--safe); border: 1px solid var(--safe); }
+        .badge-WARNING { background: rgba(255, 187, 0, 0.2); color: #ffbb00; border: 1px solid #ffbb00; }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--accent), #7700ff);
+            color: #fff;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
+            transition: transform 0.2s;
+        }
+        .analyze-btn:hover { transform: scale(1.02); }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        footer { text-align: center; padding: 2rem; color: #555; border-top: 1px solid #222; margin-top: auto; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/dashboard" class="logo">AI CyberShield</a>
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <h1><span>User Behavior</span> Simulator</h1>
+            <p>Simulate user actions to detect Insider Threats and Compromised Accounts.</p>
+        </div>
+
+        <div class="tool-card">
+            <div class="form-grid">
+                
+                <div class="form-group">
+                    <label><i class="fas fa-user-circle"></i> Role Profile</label>
+                    <select id="role">
+                        <option value="Employee">Standard Employee</option>
+                        <option value="Admin">IT Administrator</option>
+                        <option value="HR">HR Manager</option>
+                        <option value="Contractor">External Contractor</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-mouse-pointer"></i> Action Performed</label>
+                    <select id="action">
+                        <option value="Login">Normal Login</option>
+                        <option value="FileAccess">Access Sensitive File</option>
+                        <option value="DataExport">Bulk Data Export</option>
+                        <option value="PasswordChange">Password Reset</option>
+                        <option value="DeleteLogs">Delete System Logs</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-clock"></i> Time of Access</label>
+                    <select id="time">
+                        <option value="09:00">Business Hours (9 AM - 5 PM)</option>
+                        <option value="19:00">After Hours (6 PM - 10 PM)</option>
+                        <option value="03:00">Late Night (11 PM - 5 AM)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-map-marker-alt"></i> Location / IP</label>
+                    <select id="location">
+                        <option value="Office">Office Network (Local)</option>
+                        <option value="VPN">Known VPN</option>
+                        <option value="Foreign">Foreign Country (Unusual)</option>
+                        <option value="Tor">Tor Exit Node</option>
+                    </select>
+                </div>
+
+            </div>
+
+            <button class="analyze-btn" onclick="analyzeBehavior()">
+                <i class="fas fa-brain"></i> Analyze Pattern
+            </button>
+        </div>
+
+        <div id="resultArea" class="result-box">
+            <span id="statusBadge" class="badge">ANALYZING...</span>
+            <h3 id="mainFinding" style="color: #fff; margin-bottom: 10px;"></h3>
+            <p id="desc" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+        </div>
+    </div>
+
+    <footer>&copy; 2025 AI CyberShield Matrix</footer>
+
+    <script>
+        async function analyzeBehavior() {
+            // 1. Gather Data
+            const payload = {
+                role: document.getElementById('role').value,
+                action: document.getElementById('action').value,
+                time: document.getElementById('time').value,
+                location: document.getElementById('location').value
+            };
+
+            // 2. UI Updates
+            const resBox = document.getElementById('resultArea');
+            const badge = document.getElementById('statusBadge');
+            const finding = document.getElementById('mainFinding');
+            const desc = document.getElementById('desc');
+
+            resBox.style.display = 'block';
+            badge.className = 'badge';
+            badge.style.background = '#333';
+            badge.innerText = "PROCESSING...";
+            finding.innerText = "Evaluating behavioral baseline...";
+            desc.innerText = "";
+
+            try {
+                // 3. Send to Backend
+                const response = await fetch('/api/ueba-analyzer', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: JSON.stringify(payload) }) 
+                });
+
+                const data = await response.json();
+
+                if(data.ok) {
+                    const risk = data.risk_level || "Safe";
+                    badge.innerText = risk.toUpperCase();
+                    
+                    if(risk === "Critical" || risk === "High") {
+                        badge.className = 'badge badge-CRITICAL';
+                    } else if (risk === "Warning") {
+                        badge.className = 'badge badge-WARNING';
+                    } else {
+                        badge.className = 'badge badge-NORMAL';
+                    }
+
+                    finding.innerText = data.main_finding;
+                    
+                    if(data.data && data.data.anomaly_reason) {
+                        desc.innerHTML = `<strong>Why:</strong> ${data.data.anomaly_reason}`;
+                    }
+                } else {
+                    finding.innerText = "Error: " + data.error;
+                }
+
+            } catch (e) {
+                console.error(e);
+                finding.innerText = "System Error: Backend connection failed.";
+            }
+        }
+    </script>
+</body>
+</html>

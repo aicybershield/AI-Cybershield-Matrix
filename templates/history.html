@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report History - AI CyberShield Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        /* General Styles adapted from your toolkit design */
+        body{font-family:'Poppins',sans-serif;background:#0b0f14;color:#dbe6f2;margin:0;padding:2rem;}
+        a{color:#7cc1ff;text-decoration:none}
+        .container{max-width:1100px;margin:0 auto}
+        .card{background:linear-gradient(180deg,#111826,#0b0f14);border:1px solid #1e2a3a;border-radius:14px;padding:2rem;box-shadow:0 10px 30px rgba(0,0,0,.4); margin-bottom: 2rem;}
+        h1{color:#7cc1ff;margin:.2rem 0 1rem; text-align: left;}
+        .back{display:inline-block;margin-bottom:1.5rem;}
+        
+        /* Table Styles for Report Display */
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .history-table th, .history-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #1e2a3a;
+        }
+        .history-table th {
+            background-color: #1a73e8;
+            color: #fff;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .history-table tr:hover {
+            background-color: #151e2b;
+        }
+        .report-detail-btn {
+            background-color: #00aaff;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            border: none;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+        }
+        
+        /* Empty State */
+        .empty-history {
+            text-align: center;
+            padding: 40px;
+            color: #98a8c3;
+            border: 1px dashed #243247;
+            border-radius: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    
+    <a class="back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+    
+    <div class="card">
+        <h1>Your Scan History</h1>
+        
+        {% if reports %}
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Tool Used</th>
+                            <th>Input Summary</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for report in reports %}
+                        <tr>
+                            <td>{{ report.scan_date.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ report.tool_name | replace('_', ' ') | title }}</td>
+                            <td>{{ report.input_data_summary[:50] }}...</td>
+                            <td>
+                                <a href="{{ url_for('view_report', report_id=report.id) }}" class="report-detail-btn">View Full Report</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="empty-history">
+                <p>No scan history found. Run a tool from the dashboard to see your first report!</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - AI CyberShield Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* General Styles matching your theme */
+        body { font-family: 'Poppins', sans-serif; background: #0b0f14; color: #dbe6f2; margin: 0; padding: 2rem; }
+        a { color: #7cc1ff; text-decoration: none; }
+        
+        .container { max-width: 450px; margin: 50px auto 0; }
+        
+        .card {
+            background: linear-gradient(180deg, #111826, #0b0f14);
+            border: 1px solid #1e2a3a;
+            border-radius: 14px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,.4);
+        }
+        
+        h1 { color: #7cc1ff; margin: .2rem 0 0.5rem; text-align: center; }
+        p.subtitle { text-align: center; color: #8899a6; font-size: 0.9rem; margin-bottom: 1.5rem; }
+
+        .field { margin: .75rem 0; }
+        label { display: block; margin-bottom: .3rem; font-weight: 600; }
+        
+        input[type="text"], input[type="email"], input[type="password"] {
+            width: 100%;
+            background: #0d1420;
+            color: #dbe6f2;
+            border: 1px solid #243247;
+            border-radius: 10px;
+            padding: .75rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus { border-color: #7cc1ff; }
+
+        .btn {
+            display: block;
+            width: 100%;
+            background: #4CAF50; /* Green implies 'Go' */
+            color: #fff;
+            padding: .8rem 1.1rem;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            font-size: 1rem;
+            transition: filter 0.2s;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        
+        .login-link { text-align: center; margin-top: 1.5rem; font-size: .9rem; color: #8899a6; }
+        
+        .error-message {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid #f44336;
+            color: #f44336;
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .helper-text {
+            font-size: 0.8rem;
+            color: #8899a6;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Create Account</h1>
+        <p class="subtitle">Join the CyberShield Network</p>
+        
+        {% if error %}
+        <div class="error-message">
+            <i class="fas fa-exclamation-circle"></i> {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="field">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Choose a username"/>
+            </div>
+            
+            <div class="field">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required placeholder="name@example.com"/>
+                <div class="helper-text">
+                    <i class="fas fa-envelope"></i> We will send a verification OTP here.
+                </div>
+            </div>
+            
+            <div class="field">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Create a strong password"/>
+            </div>
+            
+            <button class="btn" type="submit">
+                Send Verification Code <i class="fas fa-arrow-right"></i>
+            </button>
+        </form>
+
+        <p class="login-link">
+            Already have an account? <a href="{{ url_for('login') }}">Sign In</a>
+        </p>
+    </div>
+</div>
+</body>
+</html>

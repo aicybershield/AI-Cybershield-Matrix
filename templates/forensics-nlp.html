@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Phishing Campaign Forensics</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Standard Dark Theme Styles */
+  body{font-family:'Poppins',sans-serif;background:#0b0f14;color:#dbe6f2;margin:0;padding:2rem;}
+  a{color:#7cc1ff;text-decoration:none}
+  .container{max-width:960px;margin:0 auto}
+  .card{background:linear-gradient(180deg,#111826,#0b0f14);border:1px solid #1e2a3a;border-radius:14px;padding:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  h1{color:#7cc1ff;margin:.2rem 0 1rem}
+  .note{color:#98a8c3;margin-bottom:1rem}
+  .field{margin:.75rem 0}
+  textarea{width:100%;background:#0d1420;color:#e0e0e0;border:1px solid #243247;border-radius:10px;padding:.75rem;}
+  .btn{display:inline-block;background:#1a73e8;color:#fff;padding:.65rem 1.1rem;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+  .btn:hover{filter:brightness(1.1)}
+  pre{background:#071018;color:#b6ffb3;border:1px solid #1c2a3c;border-radius:10px;padding:1rem;overflow:auto;max-height:400px}
+  .back{display:inline-block;margin-bottom:1rem}
+</style>
+
+</head>
+<body>
+<div class="container">
+<a class="back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<div class="card">
+<h1>Phishing Campaign Forensics (NLP)</h1>
+<p class="note">Uses Unsupervised NLP (Topic Modeling) to match new emails/text to known, active phishing campaigns.</p>
+<div class="field">
+<textarea id="toolInput" rows="5" placeholder="Enter the suspicious email subject or body text for campaign analysis..."></textarea>
+</div>
+<button class="btn" onclick="runTool('forensics-nlp')">Analyze Campaign</button>
+<h3>Result</h3>
+<pre id="result">—</pre>
+</div>
+</div>
+<script>
+async function runTool(route) {
+    const inputEl = document.getElementById('toolInput'); 
+    const resultEl = document.getElementById('result');
+    const rawInput = inputEl ? inputEl.value.trim() : '';
+
+    if (!rawInput) {
+        resultEl.textContent = 'Please provide text for analysis.';
+        return;
+    }
+
+    resultEl.innerHTML = '<h4><span style="color: #00aaff;">Running Topic Analysis...</span></h4>';
+    
+    try {
+        const res = await fetch('/api/' + route, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ input: rawInput }) 
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok === false) {
+             const errorMsg = data.error || data.raw_stderr || 'Unknown execution error.';
+             resultEl.innerHTML = `<h4><span style="color: #f44336;">EXECUTION FAILED</span></h4><pre>${errorMsg}</pre>`;
+             return;
+        }
+
+        const campaign = data.tool_prediction || "N/A";
+        let color = '#ff9800'; 
+        
+        if (campaign.includes("Amazon") || campaign.includes("PayPal")) {
+            color = '#f44336'; 
+        }
+        
+        resultEl.innerHTML = `
+            <h4>Campaign Match: <span style="color: ${color};">${campaign}</span></h4>
+            <p><strong>Main Finding:</strong> ${data.main_finding || 'NLP analysis completed.'}</p>
+            ${data.advanced_report_details.assigned_cluster_id !== undefined ? `<p><strong>Cluster ID:</strong> ${data.advanced_report_details.assigned_cluster_id}</p>` : ''}
+            
+            <details>
+                <summary>NLP Analysis Details</summary>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </details>
+        `;
+        
+    } catch (e) {
+        resultEl.innerHTML = `<h4><span style="color: #f44336;">NETWORK/PARSING ERROR</span></h4><pre>${e.message}</pre>`;
+    }
+}
+</script>
+</body>
+</html>

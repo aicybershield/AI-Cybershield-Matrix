@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+    
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>
+            AI CyberShield Matrix: Intelligent Threat Detection & Analysis
+        </title>
+
+        <link
+            href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            /* Basic Reset and Global Styles */
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: "Poppins", sans-serif;
+                line-height: 1.6;
+                background-color: #121212;
+                color: #e0e0e0;
+            }
+
+            h1,
+            h2,
+            h3 {
+                font-weight: 600;
+            }
+
+            a {
+                text-decoration: none;
+                color: #00aaff;
+            }
+
+            /* Navbar */
+            .navbar {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem 5%;
+                background-color: #1f1f1f;
+                border-bottom: 2px solid #00aaff;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: #fff;
+            }
+
+            .nav-controls {
+                display: flex;
+                align-items: center;
+            }
+
+            .user-greeting {
+                margin-right: 1.5rem;
+                font-size: 1rem;
+                color: #00aaff;
+                font-weight: 600;
+            }
+
+            .menu-button {
+                background: none;
+                border: none;
+                color: #fff;
+                font-size: 1.5rem;
+                cursor: pointer;
+            }
+
+            .menu-items {
+                display: none;
+                position: absolute;
+                top: 60px;
+                right: 5%;
+                background-color: #1f1f1f;
+                border: 1px solid #00aaff;
+                border-top: none;
+                padding: 1rem;
+                border-radius: 0 0 5px 5px;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            }
+
+            .menu-items.show {
+                display: block;
+            }
+
+            .menu-items ul {
+                list-style: none;
+            }
+
+            .menu-items ul li {
+                margin-bottom: 0.5rem;
+            }
+
+            .menu-items ul li a {
+                color: #e0e0e0;
+                display: block;
+                padding: 0.5rem 1rem;
+            }
+
+            .menu-items ul li a:hover {
+                background-color: #00aaff;
+                color: #fff;
+                border-radius: 3px;
+            }
+            
+            .auth-link {
+                display: block;
+                padding: 0.5rem 1rem;
+                background-color: #4CAF50; /* Green for login */
+                color: white !important;
+                border-radius: 5px;
+                text-align: center;
+                margin-top: 0.5rem;
+            }
+
+            .logout-link {
+                background-color: #f44336; /* Red for logout */
+            }
+
+            /* Hero Section with Video Background */
+            .hero-section {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                height: 100vh;
+                text-align: center;
+                position: relative;
+                color: #fff;
+                overflow: hidden;
+            }
+
+            .hero-section.hidden {
+                display: none;
+            }
+
+            .hero-video {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                min-width: 100%;
+                min-height: 100%;
+                width: auto;
+                height: auto;
+                transform: translate(-50%, -50%);
+                z-index: 0;
+                object-fit: cover;
+            }
+
+            .hero-section::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.6);
+                z-index: 1;
+            }
+
+            .hero-content {
+                position: relative;
+                z-index: 2;
+                max-width: 800px;
+                padding: 2rem;
+            }
+
+            .hero-content h1 {
+                font-size: 3rem;
+                margin-bottom: 1rem;
+            }
+
+            .hero-content p {
+                font-size: 1.2rem;
+                margin-bottom: 2rem;
+            }
+
+            .cta-button {
+                background-color: #00aaff;
+                color: #fff;
+                padding: 0.8rem 2rem;
+                border-radius: 50px;
+                font-weight: 600;
+                transition: background-color 0.3s ease;
+            }
+
+            .cta-button:hover {
+                background-color: #0077cc;
+            }
+
+            /* --- NEW ANIMATION CSS --- */
+            .ticker-wrap {
+                width: 100%;
+                overflow: hidden;
+                padding: 10px 0;
+                background: rgba(0, 0, 0, 0.3);
+                margin-bottom: 15px;
+                border-radius: 5px;
+                box-shadow: 0 0 10px rgba(0, 170, 255, 0.3);
+            }
+
+            .ticker-text {
+                width: 200%;
+                white-space: nowrap;
+                color: #00aaff;
+                font-weight: 600;
+                animation: ticker 25s linear infinite;
+                padding-left: 100%;
+                font-size: 1.1rem;
+            }
+
+            @keyframes ticker {
+                0% { transform: translate3d(0, 0, 0); }
+                100% { transform: translate3d(-50%, 0, 0); }
+            }
+            /* --- END NEW ANIMATION CSS --- */
+
+            /* Tools Section */
+            .tools-section {
+                padding: 4rem 5%;
+                text-align: center;
+                display: none; 
+            }
+
+            .tools-section.show {
+                display: block;
+            }
+            
+            /* New Menu Styles */
+            .section-menu {
+                display: flex;
+                justify-content: center;
+                flex-wrap: wrap;
+                gap: 15px;
+                margin-bottom: 40px;
+            }
+
+            .section-btn {
+                background-color: #1f1f1f;
+                color: #00aaff;
+                border: 1px solid #00aaff;
+                padding: 12px 25px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-weight: 600;
+                transition: background-color 0.3s, color 0.3s;
+                flex: 1 1 200px; /* Allow buttons to wrap and have minimum size */
+            }
+            
+            .section-btn.active, .section-btn:hover {
+                background-color: #00aaff;
+                color: #1f1f1f;
+                box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+            }
+
+            .tools-section h2 {
+                font-size: 2.5rem;
+                margin-bottom: 3rem;
+                color: #fff;
+            }
+            
+            /* Content Block Styles */
+            .tool-content-block {
+                text-align: left;
+                margin-bottom: 3rem;
+                display: none; /* Hidden by default */
+            }
+
+            .tool-content-block.show {
+                display: block;
+            }
+
+            .tools-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+                gap: 2rem;
+            }
+
+            /* ENFORCING SAME CARD SIZE (FIXED ALIGNMENT) */
+            .tool-card {
+                background-color: #1f1f1f;
+                border: 1px solid #333;
+                padding: 2rem;
+                border-radius: 10px;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                text-align: left;
+                display: flex; 
+                flex-direction: column;
+                justify-content: space-between; /* CRITICAL: Distributes space evenly */
+                height: 300px; /* FIXED HEIGHT */
+            }
+
+            .tool-card:hover {
+                transform: translateY(-10px);
+                box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            }
+
+            .tool-card h3 {
+                font-size: 1.5rem;
+                margin-bottom: 0.5rem;
+                color: #00aaff;
+            }
+
+            .tool-card p {
+                /* FIX: Ensure vertical margins/paddings don't push the link out */
+                margin-top: 0.5rem;
+                margin-bottom: 1.5rem; 
+                font-size: 0.9rem;
+                flex-grow: 1; /* Allows text content to push link down */
+            }
+
+            .tool-link {
+                display: block; 
+                text-align: center; 
+                background-color: #00aaff;
+                color: #fff;
+                padding: 0.5rem 1.5rem;
+                border-radius: 5px;
+                font-weight: 600;
+                transition: background-color 0.3s ease;
+            }
+
+            .tool-link:hover {
+                background-color: #0077cc;
+            }
+
+            /* About Section (initially hidden) */
+            .about-section {
+                padding: 4rem 5%;
+                background-color: #1f1f1f;
+                text-align: center;
+                display: none;
+            }
+
+            .about-section.show {
+                display: block;
+            }
+
+            .about-section h2 {
+                font-size: 2.5rem;
+                margin-bottom: 1.5rem;
+                color: #fff;
+            }
+
+            .about-section p {
+                max-width: 800px;
+                margin: 0 auto;
+                color: #b0b0b0;
+            }
+
+            /* Footer */
+            .footer {
+                text-align: center;
+                padding: 2rem 5%;
+                background-color: #1f1f1f;
+                border-top: 1px solid #333;
+            }
+
+            .footer-info {
+                font-size: 0.9rem;
+                margin-top: 1rem;
+                line-height: 1.8;
+                color: #b0b0b0;
+            }
+
+            .footer-info h4 {
+                margin-top: 1rem;
+                color: #fff;
+            }
+
+            /* Responsive Design */
+            @media (max-width: 768px) {
+                .navbar {
+                    flex-direction: row;
+                    justify-content: space-between;
+                }
+                .section-menu {
+                    flex-direction: column;
+                }
+                .tool-card {
+                    height: auto; /* Remove fixed height on mobile */
+                }
+            }
+            /* --- MOBILE UI OPTIMIZATION --- */
+            @media (max-width: 768px) {
+                /* Reduce padding so content doesn't feel cramped */
+                body { padding: 0; }
+                
+                .navbar {
+                    padding: 0.8rem 3%;
+                }
+
+                /* Stack the Hero section content */
+                .hero-content h1 {
+                    font-size: 1.8rem;
+                }
+
+                .hero-content p {
+                    font-size: 1rem;
+                }
+
+                /* IMPORTANT: Re-stack the tool grid for vertical scrolling */
+                .tools-grid {
+                    grid-template-columns: 1fr; /* Force 1 column */
+                    gap: 1.5rem;
+                    padding: 0 10px;
+                }
+
+                .tool-card {
+                    height: auto; /* Allow card to grow with text */
+                    min-height: 250px;
+                }
+
+                /* Make the section buttons (Admin/Tools) scrollable horizontally */
+                .section-menu {
+                    display: flex;
+                    flex-wrap: nowrap;
+                    overflow-x: auto;
+                    justify-content: flex-start;
+                    padding-bottom: 10px;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                .section-btn {
+                    flex: 0 0 auto; /* Prevent buttons from shrinking */
+                    white-space: nowrap;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header class="navbar">
+            <a href="{{ url_for('dashboard') }}" class="logo">AI CyberShield Matrix</a>
+            <div class="nav-controls">
+                {% if current_user.is_authenticated %}
+                <span class="user-greeting">Welcome, {{ current_user.username }}!</span>
+                {% endif %}
+                <button class="menu-button" onclick="toggleMenu()">☰</button>
+            </div>
+            <div id="menuItems" class="menu-items">
+                <ul>
+                    <li><a href="{{ url_for('dashboard') }}">Home</a></li>
+                    
+                    
+                    {% if current_user.role == 'admin' %}
+                    <section id="admin-control" class="tools-section show" style="background-color: #1a1a1a; border-top: 3px solid #00aaff; margin-top: 50px;">
+                        <h3 style="font-size: 2rem; color: #fff; margin-bottom: 1.5rem;">Administration Control</h3>
+                        <p class="note" style="margin-bottom: 2rem; color: #ffcc00;">Authorized Access only for Admins</p>
+                        
+                        <div class="section-menu" style="margin-bottom: 0;">
+                            <button class="section-btn"onclick="window.location.href='{{ url_for('ai_core_page') }}'">
+                                 🛡️ AI Core Docs
+                            </button>
+
+                            <button class="section-btn"onclick="window.location.href='{{ url_for('admin_monitor') }}'">
+                                 📊 Activity Monitor
+                            </button>
+
+                            <button class="section-btn" onclick="alert('User Management Console Loading...')">
+                                 👥 User Management
+                            </button>
+                        </div>
+                    </section>
+                    {% endif %}
+                    <li><a href="#" onclick="showSection('tools', 'threat-detection')">Tools</a></li> 
+                    <li><a href="#" onclick="showSection('about')">About</a></li>
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('history') }}">Report History</a></li>
+                    <a href="{{ url_for('logout') }}" class="auth-link logout-link"
+                        >Logout</a
+                    >
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="auth-link">Login</a>
+                    <a href="{{ url_for('register') }}" class="auth-link" style="background-color: #555">Register</a>
+                    {% endif %}
+                </ul>
+            </div>
+        </header>
+
+        <main>
+            
+            <section id="homepage" class="hero-section">
+                <video autoplay muted loop class="hero-video">
+                    <source
+                        src="https://assets.mixkit.co/videos/preview/mixkit-circuit-board-with-glowing-dots-22879-large.mp4"
+                        type="video/mp4"
+                    />
+                </video>
+                <div class="hero-content">
+                    
+                    <h1>AI CyberShield Matrix</h1>
+                    <script src="https://unpkg.com/scrollreveal"></script>
+    <script>
+        const sr = ScrollReveal({
+            origin: 'bottom',
+            distance: '40px',
+            duration: 1000,
+            delay: 100,
+            reset: true // Animations repeat when scrolling up/down
+        });
+
+        // Hero Section (Top)
+        sr.reveal('.hero-content h1', { delay: 800 });
+        sr.reveal('.hero-content h1', { delay: 200, duration: 2500 });
+        sr.reveal('.hero-btns', { delay: 600 });
+
+        // Section Titles
+        sr.reveal('.section-title', { delay: 100, origin: 'left' });
+
+        // Tool Cards (Cascading Effect)
+        // 'interval' makes them pop up one-by-one
+        sr.reveal('.tool-card', { interval: 150 }); 
+    </script>
+             <br /><br />       
+                    <div class="ticker-wrap">
+                        <div class="ticker-text">
+                            DEEPFAKE DETECTION • ADVERSARIAL SHIELD • UEBA • PHISHING • THREAT SIMULATION • CLOUD POSTURE • DARK WEB • AI INTEGRITY 
+                        </div>
+                    </div>
+                    <p>
+                        Welcome — this project is an intelligent, easy-to-use security
+                        toolkit that detects phishing sites, flags suspicious files, and
+                        analyzes threats using advanced AI models. Built for individuals and
+                        small businesses, AI CyberShield Matrix turns complex threat
+                        intelligence into clear, actionable alerts so you can protect what
+                        matters without being a security expert.
+                    </p>
+                    <br /><br />
+                    <a href="#" onclick="showSection('about')" class="cta-button"
+                        >Learn More</a
+                    >
+                    <br /><br />
+                    <br /><br />
+                    <a
+                        href="#"
+                        onclick="showSection('tools', 'threat-detection')"
+                        class="cta-button"
+                        style="margin-left: 10px"
+                    >
+                        Explore the Toolkit
+                    </a>
+                </div>
+            </section>
+
+            <section id="about" class="about-section">
+                <h2>About this Project</h2>
+                <p>
+                    The <strong>AI CyberShield Matrix</strong> is a next-generation
+                    cybersecurity toolkit designed to protect individuals and small
+                    businesses from phishing websites, malware attacks, and other digital
+                    threats. Using the power of Artificial Intelligence and Machine
+                    Learning, this project analyzes suspicious links, files, and
+                    activities in real-time, ensuring users can safely browse, work, and
+                    communicate online.
+                </p>
+                <br /><br />
+                <p>
+                    This project has been developed as part of an academic initiative at
+                    <strong>K. K. Wagh Polytechnic, Nashik</strong>, under the
+                    <strong
+                        >Artificial Intelligence & Machine Learning (AIML)
+                        Department</strong
+                    >. The goal is to bridge the gap between academic research and
+                    practical industry applications by building an intelligent,
+                    easy-to-use security solution for the modern digital world.
+                </p>
+                <br /><br />
+                <p>
+                    The system integrates advanced AI models, threat-detection algorithms,
+                    and a simple user interface to make cybersecurity accessible even to
+                    non-technical users. It demonstrates how AIML technologies can be
+                    applied to real-world problems and showcases the innovative spirit of
+                    the students and faculty of K. K. Wagh Polytechnic.
+                </p>
+                <br /><br />
+                <p>
+                    This project not only reflects our technical learning but also our
+                    commitment to creating solutions that contribute to a safer digital
+                    ecosystem.
+                </p>
+                <br /><br />
+                <p>
+                    This project is proudly sponsored and mentored by <strong>Cyber Sanskar, Nashik</strong>, an organization dedicated to fostering a secure digital culture and providing expert cybersecurity education. Founded by <strong>Mr. Tanmay S. Dikshit Sir</strong>, Cyber Sanskar has played a pivotal role in guiding this initiative. Through their technical expertise and vision for a <strong>"Cyber-Safe India,"</strong> we have been able to integrate industry-standard threat analysis techniques and ethical security practices into the <strong>AI CyberShield Matrix</strong>.
+                </p>
+            </section>
+
+            <section id="tools" class="tools-section"> 
+                <h2>The AI CyberShield Toolkit</h2>
+                
+                <div class="section-menu">
+                    <button class="section-btn active" id="btn-threatdetection" onclick="showTools('threat-detection')">Detection & Prevention</button>
+                    <button class="section-btn" id="btn-aiintegrity" onclick="showTools('ai-integrity')">AI Integrity & Security</button>
+                    <button class="section-btn" id="btn-deepvisibility" onclick="showTools('deep-visibility')">Deep Visibility & Intelligence</button>
+                    <button class="section-btn" id="btn-userawareness" onclick="showTools('user-awareness')">User Awareness & Assistance</button>
+                </div>
+
+                <div class="tool-content-block show" id="content-threat-detection">
+                    <h3 style="color: #00aaff; margin-bottom: 1rem;">Threat Detection & Prevention</h3>
+                    <p class="note">Real-time defense tools designed to stop attacks at the perimeter.</p>
+                    <br /><br />
+                    <div class="tools-grid">
+
+                        <div class="tool-card">
+                            <h3>AI Phishing Detector</h3>
+                            <p>Detect and block phishing attempts with our smart AI engine using real-time URL and text analysis.</p>
+                            <a href="{{ url_for('phishing-detector') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>AI Fake Login Detector</h3>
+                            <p>Identifies and blocks fraudulent login pages instantly by analyzing page structure and source code.</p>
+                            <a href="{{ url_for('fake-login-detector') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>File & URL Scanner</h3>
+                            <p>Scans files and URLs for malicious content, including image and video analysis for hidden threats.</p>
+                            <a href="{{ url_for('file-url-scanner') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>AI Vulnerability Scanner</h3>
+                            <p>A smart vulnerability scanner to find common security bugs and risky function calls in code snippets.</p>
+                            <a href="{{ url_for('bughunter') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <div class="tool-content-block" id="content-ai-integrity">
+                    <h3 style="color: #00aaff; margin-bottom: 1rem;">AI System & Integrity Security</h3>
+                    <p class="note">Cutting-edge tools focused on protecting AI models, data integrity, and synthetic media analysis.</p>
+                    <br /><br />
+                    <div class="tools-grid">
+                        
+                        <div class="tool-card">
+                            <h3>Data Poisoning Monitor</h3>
+                            <p>Detects anomalies and outliers in training datasets that signal malicious data poisoning attacks.</p>
+                            <a href="{{ url_for('data-poisoning-monitor') }}" class="tool-link">Analyze Data</a>
+                        </div>
+
+                        <div class="tool-card">
+                            <h3>Adversarial Attack Shield</h3>
+                            <p>Analyzes input images for subtle, human-imperceptible noise added by attackers to trick AI classifiers.</p>
+                            <a href="{{ url_for('adversarial-attack-shield') }}" class="tool-link">Analyze Input</a>
+                        </div>
+
+                        <div class="tool-card">
+                            <h3>Synthetic Media Analyzer</h3>
+                            <p>Uses Deep Learning to analyze media for anomalies, determining if they are real or AI-generated.</p>
+                            <a href="{{ url_for('deepfake-analyzer') }}" class="tool-link">Analyze Media</a>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <div class="tool-content-block" id="content-deep-visibility">
+                    <h3 style="color: #00aaff; margin-bottom: 1rem;">Deep Visibility & Intelligence</h3>
+                    <p class="note">Advanced analytical tools for infrastructure, user behavior, and threat intelligence gathering.</p>
+                    <br /><br />
+                    <div class="tools-grid">
+
+                        <div class="tool-card">
+                            <h3>User Behavior Monitor</h3>
+                            <p>Uses clustering to detect compromised accounts and insider threats by spotting user anomalies.</p>
+                            <a href="{{ url_for('ueba-analyzer') }}" class="tool-link">Analyze Behavior</a>
+                        </div>
+
+                        <div class="tool-card">
+                            <h3>Phishing Email Analyzer</h3>
+                            <p>Uses Unsupervised NLP to group new phishing emails into active campaigns and analyze trends.</p>
+                            <a href="{{ url_for('forensics-nlp') }}" class="tool-link">NLP Analyze</a>
+                        </div>
+
+                        <div class="tool-card">
+                            <h3>AI Network Traffic Analyzer</h3>
+                            <p>Deep learning model to detect anomalies and covert attacks in network flows.</p>
+                            <a href="{{ url_for('network-analyzer') }}" class="tool-link">Analyze Flows</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>Dark Web Checker</h3>
+                            <p>Find out if your data has been exposed on the dark web by querying known breach databases.</p>
+                            <a href="{{ url_for('dark-web-checker') }}" class="tool-link">Use Tool</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tool-content-block" id="content-user-awareness">
+                    <h3 style="color: #00aaff; margin-bottom: 1rem;">User Awareness & Assistance</h3>
+                    <p class="note">Utility and educational tools to help users stay safe and informed.</p>
+                    <br /><br />
+                    <div class="tools-grid">
+                        <div class="tool-card">
+                            <h3>Password Generator & Analyzer</h3>
+                            <p>Generate & Check strength of your passwords and generate cryptographically secure ones instantly.</p>
+                            <a href="{{ url_for('password-analyzer') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>Text Encryptor/Hasher</h3>
+                            <p>Encrypt and decrypt text with multiple advanced modes (Base64, Hex, SHA-256).</p>
+                            <a href="{{ url_for('text-encryptor') }}" class="tool-link">Use Tool</a>
+                        </div>
+                        <div class="tool-card">
+                            <h3>Metadata Extractor</h3>
+                            <p>Extract hidden EXIF data, camera info, and GPS coordinates from images.</p>
+                            <a href="{{ url_for('metadata-extractor') }}" class="tool-link">Extract Data</a>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+
+        <footer
+            class="footer"
+            style="
+                background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
+                color: white;
+                padding: 3rem 5%;
+            "
+        >
+            <div
+                style="
+                    display: flex;
+                    flex-wrap: wrap;
+                    justify-content: space-between;
+                    gap: 2rem;
+                "
+            >
+                <div style="flex: 1; min-width: 250px">
+                    <h3>About AI CyberShield Matrix</h3>
+                    <p>
+                        A next-gen suite of AI-powered cybersecurity tools designed to
+                        detect, analyze, and prevent digital threats in real-time.
+                    </p>
+                </div>
+                <div style="flex: 1; min-width: 250px">
+                    <h3>Team Members</h3>
+                    <p>Varun Dipak Joshi</p>
+                    <p>Mithilesh Randhir Khairnar</p>
+                    <p>Shubham Dileep Kungar</p>
+                    <p>Harshit Anil Aher</p>
+                </div>
+                <div style="flex: 1; min-width: 250px">
+                    <h3>Contact</h3>
+                    <p>College: K. K. Wagh Polytechnic, Nashik.</p>
+                    <p>Department: Artificial Intelligence & Machine Learning</p>
+                    <p>Head of Department: Mr. H. M. Gaikwad</p>
+                    <p>Project Guide: Mr. S. V. Waghmare</p>
+                </div>
+            </div>
+            <div
+                style="
+                    text-align: center;
+                    margin-top: 2rem;
+                    border-top: 1px solid rgba(255, 255, 255, 0.2);
+                    padding-top: 1rem;
+                "
+            >
+                &copy; 2025 AI CyberShield Matrix. All rights reserved.
+                <p>Sponsored By: Tanmay S Dikshit ( Cyber Sanskar, Nashik)</p>
+            </div>
+        </footer>
+
+        <script>
+            // Function to switch between the Home/About/Tools main sections
+            function showSection(sectionId, defaultToolTab = 'threat-detection') {
+                const sections = document.querySelectorAll("main section");
+                const homepage = document.getElementById("homepage");
+
+                // 1. Hide ALL sections
+                sections.forEach((section) => {
+                    section.classList.remove("show");
+                });
+                
+                // --- LOGIC: Redirect to AI Core Page ---
+                if (sectionId === 'ai-core') {
+                    // Check role before redirecting
+                    if ('{{ current_user.role }}' === 'admin') {
+                        window.location.href = '{{ url_for("ai_core_page") }}';
+                    } else {
+                        alert("Access Denied: Administrative privileges required.");
+                    }
+                    return;
+                }
+                // ---------------------------------------------------------------
+
+                // 2. Control visibility of the homepage (hero-section)
+                if (homepage) {
+                    if (sectionId === 'homepage' || sectionId === 'dashboard') {
+                        homepage.classList.remove("hidden");
+                    } else {
+                        homepage.classList.add("hidden");
+                    }
+                }
+                
+                // 3. Show the requested main section
+                const targetSection = document.getElementById(sectionId);
+                if (targetSection) {
+                    targetSection.classList.add("show");
+                }
+                
+                // 4. If showing the TOOLS section, ensure a default tool tab is active
+                if (sectionId === 'tools') {
+                    showTools(defaultToolTab);
+                }
+
+                // 5. Close menu if open (and it exists in the DOM/is shown)
+                const menuItems = document.getElementById("menuItems");
+                if(menuItems && menuItems.classList.contains("show")) {
+                   toggleMenu();
+                }
+            }
+
+            // Function to switch between the tool categories/tabs
+            function showTools(sectionName) {
+                const contentBlocks = document.querySelectorAll('.tool-content-block');
+                const buttons = document.querySelectorAll('.section-btn');
+
+                // Hide all content blocks
+                contentBlocks.forEach(block => block.classList.remove('show'));
+                
+                // Deactivate all buttons
+                buttons.forEach(btn => btn.classList.remove('active'));
+                
+                // Show the requested content block and activate the corresponding button
+                const targetContent = document.getElementById('content-' + sectionName);
+                const targetButton = document.getElementById('btn-' + sectionName.replace(/-/g, ''));
+                
+                if (targetContent) targetContent.classList.add('show');
+                if (targetButton) targetButton.classList.add('active');
+                
+                // Scroll to the top of the tools grid for better UX
+                document.getElementById('tools').scrollIntoView({ behavior: 'smooth' });
+            }
+
+
+            function toggleMenu() {
+                const menuItems = document.getElementById("menuItems");
+                menuItems.classList.toggle("show");
+            }
+
+            // Initial Call: Check URL for #tools to open that section immediately
+            document.addEventListener('DOMContentLoaded', () => {
+                
+                // Check if the URL has a hash (like #tools)
+                if (window.location.hash === '#tools') {
+                    showSection('tools');
+                } else {
+                    // Default logic: Show Homepage
+                    const toolsSection = document.getElementById('tools');
+                    const homepage = document.getElementById('homepage');
+                    if (toolsSection) toolsSection.classList.remove('show');
+                    if (homepage) homepage.classList.remove('hidden');
+                }
+            });
+        </script>
+    </body>
+</html>

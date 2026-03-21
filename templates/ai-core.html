@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Core Architecture - CyberShield Matrix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- GLOBAL STYLES --- */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0b0f14;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* --- NAVBAR (Consistent with Dashboard) --- */
+        .navbar {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 5%; background-color: #161b22;
+            border-bottom: 2px solid #00aaff; position: sticky; top: 0; z-index: 1000;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; }
+        .back-btn {
+            padding: 8px 20px; border: 1px solid #00aaff; color: #00aaff;
+            text-decoration: none; border-radius: 5px; transition: 0.3s;
+        }
+        .back-btn:hover { background: #00aaff; color: #fff; }
+
+        /* --- HERO SECTION --- */
+        .hero {
+            text-align: center; padding: 4rem 2rem;
+            background: radial-gradient(circle at center, #1b2735 0%, #0b0f14 70%);
+        }
+        .hero h1 { font-size: 3rem; color: #fff; margin-bottom: 1rem; }
+        .hero span { color: #00aaff; }
+        .hero p { font-size: 1.1rem; color: #a0a0a0; max-width: 700px; margin: 0 auto; }
+
+        /* --- PIPELINE ARCHITECTURE VISUALIZATION --- */
+        .pipeline-container {
+            padding: 2rem 5%;
+            margin-bottom: 4rem;
+        }
+        .section-title { text-align: center; margin-bottom: 3rem; font-size: 2rem; color: #fff; }
+        
+        .pipeline-flow {
+            display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 20px;
+        }
+
+        .step-card {
+            background: #161b22; border: 1px solid #30363d; padding: 20px;
+            border-radius: 12px; width: 220px; text-align: center;
+            position: relative; transition: transform 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+        .step-card:hover { transform: translateY(-5px); border-color: #00aaff; }
+        
+        .step-icon { font-size: 2.5rem; color: #00aaff; margin-bottom: 15px; }
+        .step-title { font-weight: 700; color: #fff; margin-bottom: 5px; }
+        .step-desc { font-size: 0.85rem; color: #8b949e; }
+
+        /* Arrow Connector */
+        .arrow { font-size: 1.5rem; color: #30363d; }
+
+        /* --- ALGORITHM CARDS GRID --- */
+        .algo-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem; padding: 0 5% 4rem;
+        }
+
+        .algo-card {
+            background: #161b22; border-left: 4px solid #00aaff;
+            border-radius: 8px; padding: 2rem;
+            position: relative; overflow: hidden;
+            transition: 0.3s;
+        }
+        .algo-card:hover { background: #1c2128; box-shadow: 0 8px 24px rgba(0, 170, 255, 0.15); }
+
+        .algo-header { display: flex; align-items: center; margin-bottom: 1rem; }
+        .algo-icon {
+            width: 50px; height: 50px; background: rgba(0, 170, 255, 0.1);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            color: #00aaff; font-size: 1.5rem; margin-right: 15px;
+        }
+        .algo-name { font-size: 1.4rem; font-weight: 600; color: #fff; }
+        
+        /* Badges */
+        .badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 600; margin-bottom: 1rem;
+        }
+        .badge-ml { background: rgba(76, 175, 80, 0.15); color: #4caf50; border: 1px solid #4caf50; } /* Green - Supervised */
+        .badge-dl { background: rgba(156, 39, 176, 0.15); color: #ce93d8; border: 1px solid #ce93d8; } /* Purple - Deep Learning */
+        .badge-ul { background: rgba(255, 152, 0, 0.15); color: #ffb74d; border: 1px solid #ffb74d; } /* Orange - Unsupervised */
+        .badge-cv { background: rgba(233, 30, 99, 0.15); color: #f48fb1; border: 1px solid #f48fb1; } /* Pink - CV */
+        .badge-crypto { background: rgba(63, 81, 181, 0.15); color: #7986cb; border: 1px solid #7986cb; } /* Indigo - Crypto */
+        .badge-static { background: rgba(96, 125, 139, 0.15); color: #b0bec5; border: 1px solid #b0bec5; } /* Grey - Static */
+
+        .algo-details { margin-top: 10px; }
+        .algo-details p { font-size: 0.95rem; color: #b0b8c4; margin-bottom: 8px; }
+        .key-role { color: #00aaff; font-weight: 600; }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 768px) {
+            .pipeline-flow { flex-direction: column; }
+            .arrow { transform: rotate(90deg); margin: 10px 0; }
+            .hero h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="{{ url_for('dashboard') }}" class="logo">
+            <i class="fas fa-shield-alt"></i> CyberShield AI Core
+        </a>
+        <a href="{{ url_for('dashboard') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+    </nav>
+
+    <section class="hero">
+        <h1>Intelligence <span>Behind the Shield</span></h1>
+        <p>Explore the Machine Learning algorithms and Deep Learning models that power the detection engines of the AI CyberShield Matrix.</p>
+    </section>
+
+    <div class="pipeline-container">
+        <h2 class="section-title">System Pipeline Architecture</h2>
+        <div class="pipeline-flow">
+            <div class="step-card">
+                <div class="step-icon"><i class="fas fa-user-shield"></i></div>
+                <div class="step-title">1. User Input</div>
+                <div class="step-desc">URL, File, Image, or Text entered via Dashboard.</div>
+            </div>
+            
+            <div class="arrow"><i class="fas fa-chevron-right"></i></div>
+
+            <div class="step-card">
+                <div class="step-icon"><i class="fas fa-cogs"></i></div>
+                <div class="step-title">2. Pre-Processing</div>
+                <div class="step-desc">Feature Extraction, Tokenization, & Resizing.</div>
+            </div>
+
+            <div class="arrow"><i class="fas fa-chevron-right"></i></div>
+
+            <div class="step-card" style="border-color: #00aaff; background: rgba(0, 170, 255, 0.05);">
+                <div class="step-icon"><i class="fas fa-brain"></i></div>
+                <div class="step-title">3. AI Inference</div>
+                <div class="step-desc">Data routed to specific ML/DL Model for analysis.</div>
+            </div>
+
+            <div class="arrow"><i class="fas fa-chevron-right"></i></div>
+
+            <div class="step-card">
+                <div class="step-icon"><i class="fas fa-file-medical-alt"></i></div>
+                <div class="step-title">4. Risk Report</div>
+                <div class="step-desc">Score calculation & generation of actionable insights.</div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="section-title">Machine Learning Model Specifications</h2>
+    <div class="algo-grid">
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-fish"></i></div>
+                <div class="algo-name">Phishing Detector</div>
+            </div>
+            <span class="badge badge-ml">Supervised Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Random Forest Classifier</p>
+                <p><span class="key-role">Why this model?</span> It builds multiple decision trees and merges them to get a more accurate and stable prediction, handling non-linear URL features effectively.</p>
+                <p><span class="key-role">Key Role:</span> Analyzes lexical features (URL length, special characters, domain age) to classify links as 'Legitimate' or 'Phishing'.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-theater-masks"></i></div>
+                <div class="algo-name">Deepfake Analyzer</div>
+            </div>
+            <span class="badge badge-dl">Deep Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> CNN (MesoNet / Xception)</p>
+                <p><span class="key-role">Why this model?</span> These specialized Convolutional Neural Networks look for microscopic artifacts and compression loss at the pixel level that human eyes miss.</p>
+                <p><span class="key-role">Key Role:</span> Detects face-swapping and frame-by-frame inconsistencies in synthetic video media.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-bug"></i></div>
+                <div class="algo-name">Malware Scanner</div>
+            </div>
+            <span class="badge badge-ml">Hybrid (ML + Static)</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> XGBoost + PE Header Analysis</p>
+                <p><span class="key-role">Why this model?</span> XGBoost is extremely fast for tabular data extracted from file headers (PE imports, section entropy) without needing to run the virus.</p>
+                <p><span class="key-role">Key Role:</span> Classifies executables as malicious based on structural metadata and entropy levels.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-user-clock"></i></div>
+                <div class="algo-name">User Behavior (UEBA)</div>
+            </div>
+            <span class="badge badge-ul">Unsupervised Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Isolation Forest</p>
+                <p><span class="key-role">Why this model?</span> It isolates anomalies (outliers) directly rather than profiling "normal" points, making it perfect for detecting hacked accounts.</p>
+                <p><span class="key-role">Key Role:</span> Flags impossible login travel times or unusual access hours that deviate from the user's history.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-network-wired"></i></div>
+                <div class="algo-name">Network Analyzer</div>
+            </div>
+            <span class="badge badge-dl">Deep Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> LSTM Autoencoders</p>
+                <p><span class="key-role">Why this model?</span> Long Short-Term Memory (LSTM) networks understand sequences of time, allowing them to spot irregular patterns in data packet flow.</p>
+                <p><span class="key-role">Key Role:</span> Detects Zero-Day intrusions or DDoS attacks by identifying traffic that violates learned temporal patterns.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-envelope-open-text"></i></div>
+                <div class="algo-name">Email Forensics</div>
+            </div>
+            <span class="badge badge-ml">Natural Language Processing</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Multinomial Naive Bayes</p>
+                <p><span class="key-role">Why this model?</span> It calculates the probability of a text being "Spam" based on word frequency (TF-IDF), highly effective for text classification.</p>
+                <p><span class="key-role">Key Role:</span> Scans email bodies for urgency, financial keywords, and social engineering language.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-biohazard"></i></div>
+                <div class="algo-name">Data Poisoning Monitor</div>
+            </div>
+            <span class="badge badge-ul">Unsupervised Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> DBSCAN Clustering</p>
+                <p><span class="key-role">Why this model?</span> Density-Based Spatial Clustering finds points that are closely packed and marks points in low-density regions as outliers (poisoned data).</p>
+                <p><span class="key-role">Key Role:</span> Protects ML training datasets by identifying malicious samples injected by attackers.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-clone"></i></div>
+                <div class="algo-name">Fake Login Detector</div>
+            </div>
+            <span class="badge badge-cv">Computer Vision</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Siamese Neural Networks</p>
+                <p><span class="key-role">Why this model?</span> Uses "One-Shot Learning" to compare the visual similarity of a suspicious page against known legitimate login pages (e.g., Facebook, Google).</p>
+                <p><span class="key-role">Key Role:</span> Identifies UI cloning attacks even if the underlying code is obfuscated.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-database"></i></div>
+                <div class="algo-name">SQL Injection Tester</div>
+            </div>
+            <span class="badge badge-ml">Supervised Learning</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> SVM (Support Vector Machine)</p>
+                <p><span class="key-role">Why this model?</span> SVMs are excellent at drawing a clear boundary between normal text strings and malicious SQL query structures.</p>
+                <p><span class="key-role">Key Role:</span> Analyzes input strings for SQL syntax patterns (e.g., ' OR 1=1) to prevent database breaches.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-key"></i></div>
+                <div class="algo-name">Password Analyzer</div>
+            </div>
+            <span class="badge badge-ml" style="border-color: #f1c40f; color: #f1c40f; background: rgba(241, 196, 15, 0.1);">Information Theory</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Shannon Entropy Calculation</p>
+                <p><span class="key-role">Why this model?</span> It measures the unpredictability of information content. Higher entropy means a password is harder to brute-force.</p>
+                <p><span class="key-role">Key Role:</span> Mathematically scores password complexity beyond simple regex rules.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-user-secret"></i></div>
+                <div class="algo-name">Dark Web Checker</div>
+            </div>
+            <span class="badge badge-ml">NLP / Retrieval</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Named Entity Recognition (NER)</p>
+                <p><span class="key-role">Why this model?</span> NER (using models like BERT) scans unstructured text dumps to locate and classify Personally Identifiable Information (PII) like emails or SSNs.</p>
+                <p><span class="key-role">Key Role:</span> Monitors breach datasets for user credentials.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-code"></i></div>
+                <div class="algo-name">BugHunter Scanner</div>
+            </div>
+            <span class="badge badge-static">Static Analysis</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> Abstract Syntax Tree (AST) Parsing</p>
+                <p><span class="key-role">Why this model?</span> Converts code into a tree structure to understand logic flow, allowing detection of insecure function calls (e.g., eval(), os.system).</p>
+                <p><span class="key-role">Key Role:</span> Identifies security flaws in Python/C++ code snippets.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-lock"></i></div>
+                <div class="algo-name">Text Encryptor</div>
+            </div>
+            <span class="badge badge-crypto">Cryptography</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> AES-256 (Advanced Encryption Standard)</p>
+                <p><span class="key-role">Why this model?</span> It is the industry standard for symmetric encryption, virtually unbreakable by brute force with current technology.</p>
+                <p><span class="key-role">Key Role:</span> Secures sensitive text data using military-grade encryption.</p>
+            </div>
+        </div>
+
+        <div class="algo-card">
+            <div class="algo-header">
+                <div class="algo-icon"><i class="fas fa-camera"></i></div>
+                <div class="algo-name">Metadata Extractor</div>
+            </div>
+            <span class="badge badge-static">Digital Forensics</span>
+            <div class="algo-details">
+                <p><span class="key-role">Algorithm:</span> EXIF Header Parsing</p>
+                <p><span class="key-role">Why this model?</span> Uses deterministic parsing to read the Exchangeable Image File Format standard embedded in media files.</p>
+                <p><span class="key-role">Key Role:</span> Reveals hidden GPS coordinates, camera models, and timestamps in images.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <footer style="text-align: center; padding: 2rem; border-top: 1px solid #333; color: #777;">
+        <p>&copy; 2025 AI CyberShield Matrix. Powered by Flask & TensorFlow.</p>
+    </footer>
+
+</body>
+</html>

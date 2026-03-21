@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Phishing Detector Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+    <style>
+        body { font-family:'Poppins',sans-serif; background:#121212; color:#e0e0e0; margin:0; padding:2rem; }
+        a { color:#00aaff; text-decoration:none; }
+        .container { max-width:900px; margin:0 auto; }
+        .card { background:#1f1f1f; border:1px solid #333; border-radius:12px; padding:1.5rem; }
+        .btn { display:inline-block; background:#00aaff; color:#fff; padding:.6rem 1.2rem; border-radius:8px; font-weight:600; border:none; cursor:pointer; }
+        .btn:hover { background:#0077cc; }
+        input, textarea { width:100%; background:#2a2a2a; color:#e0e0e0; border:1px solid #333; border-radius:8px; padding:.6rem; margin:.4rem 0 1rem; }
+        .note { font-size:.95rem; color:#b0b0b0; }
+        .back { margin-bottom:1rem; display:inline-block; }
+        pre { background:#0e0e0e; padding:1rem; border-radius:8px; overflow:auto; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <a class="back" href="/">← Back to Dashboard</a>
+    <div class="card">
+        <h1 style="color:#00aaff; margin:0 0 .5rem 0;">Phishing Detector Tool</h1>
+        <p class="note">Submit a URL/text to detect phishing.</p>
+
+        <form id="toolForm">
+            <textarea name="input" rows="5" placeholder="Enter input..."></textarea>
+            <button class="btn" type="submit">Run</button>
+        </form>
+
+        <h3>Result</h3>
+        <pre id="result">—</pre>
+    </div>
+</div>
+<script>
+document.getElementById('toolForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fd = new FormData(e.target);
+    const input = fd.get('input');
+    const resultEl = document.getElementById('result');
+    resultEl.textContent = 'Running analysis...'; // Update loading message
+
+    try {
+        const res = await fetch('/api/phishing-detector', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ input })
+        });
+        
+        const rawData = await res.json();
+
+        // 1. Check if the tool execution itself was successful
+        if (!rawData.ok) {
+            resultEl.textContent = `ERROR: Tool failed to execute. Details: ${rawData.stderr || rawData.error}`;
+            return;
+        }
+
+        // 2. Parse the internal JSON string from the stdout field
+        const reportData = JSON.parse(rawData.stdout);
+        
+        // 3. Display a well-formatted report (instead of raw JSON)
+        resultEl.innerHTML = `
+            <h4>Result Status: <span style="color: ${reportData.risk_level.startsWith('HIGH') ? '#f44336' : '#4CAF50'};">${reportData.risk_level}</span></h4>
+            <p><strong>Input:</strong> ${reportData.input_received}</p>
+            <p><strong>Finding:</strong> ${reportData.main_finding}</p>
+            <p><strong>Confidence:</strong> ${reportData.confidence_score * 100}%</p>
+            
+            <details>
+                <summary>Advanced ML Details</summary>
+                <pre>${JSON.stringify(reportData.advanced_report_details, null, 2)}</pre>
+            </details>
+        `;
+
+    } catch (e) {
+        resultEl.textContent = 'A network or parsing error occurred: ' + e.message;
+    }
+});
+</script>
+</body>
+</html>

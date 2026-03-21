@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>File & URL Scanner</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Standard Dark Theme Styles (omitted for brevity) */
+  body{font-family:'Poppins',sans-serif;background:#0b0f14;color:#dbe6f2;margin:0;padding:2rem;}
+  /* ... (Include your standard styles here) ... */
+</style>
+
+</head>
+<body>
+<div class="container">
+<a class="back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<div class="card">
+<h1>File & URL Scanner</h1>
+<p class="note">Scan suspicious URLs, text, or **Image files** for malicious content and potential malware.</p>
+
+<div class="field">
+    <textarea id="textInput" rows="3" placeholder="Enter URL or suspicious text..."></textarea>
+</div>
+
+<div class="field">
+    <label for="fileInput" style="display:block; margin-bottom: 5px;">— OR — Upload Image File (JPG, PNG, GIF):</label>
+    <input type="file" id="fileInput" accept=".png,.jpg,.jpeg,.gif" style="padding: 5px; background: #1c2a3c; border: 1px solid #243247;">
+</div>
+
+<button class="btn" onclick="runScanner('file-url-scanner')">Analyze Content</button>
+<h3>Result</h3>
+<pre id="result">—</pre>
+</div>
+</div>
+<script>
+async function runScanner(route) {
+    const textInput = document.getElementById('textInput').value.trim();
+    const fileInput = document.getElementById('fileInput');
+    const resultEl = document.getElementById('result');
+    
+    let apiUrl = `/api/${route}`;
+    let body = {};
+    let isFile = false;
+
+    if (fileInput.files.length > 0) {
+        // --- 1. FILE UPLOAD LOGIC ---
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+        apiUrl = `/api/upload_file/${route}`; // Use the NEW file upload endpoint
+        body = formData;
+        isFile = true;
+        
+        resultEl.innerHTML = '<h4><span style="color: #00aaff;">Uploading and Analyzing File...</span></h4>';
+
+    } else if (textInput) {
+        // --- 2. TEXT/URL INPUT LOGIC ---
+        body = JSON.stringify({ input: textInput });
+        resultEl.innerHTML = '<h4><span style="color: #00aaff;">Analyzing Text/URL...</span></h4>';
+        
+    } else {
+        resultEl.textContent = 'Please enter text/URL or select a file to analyze.';
+        return;
+    }
+    
+    try {
+        const res = await fetch(apiUrl, {
+            method:'POST',
+            // IMPORTANT: If sending file (FormData), DO NOT set Content-Type header
+            headers: isFile ? {} : {'Content-Type':'application/json'},
+            body: body 
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok === false) {
+             const errorMsg = data.error || data.raw_stderr || 'Unknown execution error.';
+             resultEl.innerHTML = `<h4><span style="color: #f44336;">EXECUTION FAILED</span></h4><pre>${errorMsg}</pre>`;
+             return;
+        }
+
+        const risk = data.risk_level || "Clean";
+        let color = '#4CAF50'; 
+        
+        if (risk.includes("Malicious") || risk.includes("High Risk")) {
+            color = '#f44336'; 
+        } else if (risk.includes("Suspicious")) {
+            color = '#ff9800'; 
+        }
+        
+        resultEl.innerHTML = `
+            <h4>Risk Level: <span style="color: ${color};">${risk}</span></h4>
+            <p><strong>Main Finding:</strong> ${data.main_finding || 'Analysis completed.'}</p>
+            <details>
+                <summary>API Response Details</summary>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </details>
+        `;
+        
+    } catch (e) {
+        resultEl.innerHTML = `<h4><span style="color: #f44336;">NETWORK/PARSING ERROR</span></h4><pre>${e.message}</pre>`;
+    }
+}
+</script>
+</body>
+</html>

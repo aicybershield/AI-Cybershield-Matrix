@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Traffic Analyzer - AI CyberShield</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- GLOBAL THEME --- */
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1f1f1f;
+            --accent: #00e5ff; /* Cyan/Electric Blue */
+            --accent-hover: #00b8cc;
+            --danger: #ff4444;
+            --safe: #00ff88;
+            --text-main: #e0e0e0;
+            --text-muted: #b0b0b0;
+            --border: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navbar */
+        .navbar {
+            padding: 1rem 5%;
+            background-color: var(--card-bg);
+            border-bottom: 2px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; }
+        .back-btn { color: var(--text-muted); text-decoration: none; transition: 0.3s; }
+        .back-btn:hover { color: var(--accent); }
+
+        /* Container */
+        .container {
+            max-width: 900px;
+            margin: 3rem auto;
+            padding: 0 1rem;
+            flex-grow: 1;
+        }
+
+        .header-section { text-align: center; margin-bottom: 2.5rem; }
+        .header-section h1 { font-size: 2.5rem; color: #fff; margin-bottom: 0.5rem; }
+        .header-section span { color: var(--accent); }
+        .header-section p { color: var(--text-muted); }
+
+        /* --- FORM CARD --- */
+        .tool-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        select, input {
+            padding: 12px;
+            background: #121212;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            outline: none;
+            transition: 0.3s;
+        }
+
+        select:focus, input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0, 229, 255, 0.2);
+        }
+
+        /* Checkbox Group */
+        .checkbox-group {
+            grid-column: span 2;
+            display: flex;
+            gap: 20px;
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            align-items: center;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .analyze-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--accent), #0099ff);
+            color: #000;
+            font-weight: 700;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            text-transform: uppercase;
+            transition: transform 0.2s;
+        }
+
+        .analyze-btn:hover { transform: scale(1.02); }
+
+        /* --- RESULTS --- */
+        .result-box {
+            margin-top: 2rem;
+            background: #151515;
+            padding: 2rem;
+            border-radius: 12px;
+            border-left: 5px solid var(--accent);
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+        .badge-MALICIOUS { background: rgba(255, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); }
+        .badge-BENIGN { background: rgba(0, 255, 136, 0.2); color: var(--safe); border: 1px solid var(--safe); }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        footer { text-align: center; padding: 2rem; color: #555; border-top: 1px solid #222; margin-top: auto; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/dashboard" class="logo">AI CyberShield</a>
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <h1><span>Network</span> Traffic Analyzer</h1>
+            <p>Enter packet details below to detect anomalies using Deep Learning.</p>
+        </div>
+
+        <div class="tool-card">
+            <div class="form-grid">
+                
+                <div class="form-group">
+                    <label><i class="fas fa-network-wired"></i> Protocol Type</label>
+                    <select id="protocol">
+                        <option value="TCP">TCP</option>
+                        <option value="UDP">UDP</option>
+                        <option value="ICMP">ICMP</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-server"></i> Service / Port</label>
+                    <select id="service">
+                        <option value="HTTP">HTTP (Web)</option>
+                        <option value="SSH">SSH (Secure Shell)</option>
+                        <option value="FTP">FTP (File Transfer)</option>
+                        <option value="SMTP">SMTP (Email)</option>
+                        <option value="DNS">DNS</option>
+                        <option value="OTHER">Other / Unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-ruler-horizontal"></i> Packet Length (Bytes)</label>
+                    <input type="number" id="packet_len" placeholder="e.g. 512" min="0">
+                </div>
+
+                <div class="form-group">
+                    <label><i class="fas fa-stopwatch"></i> Duration (ms)</label>
+                    <input type="number" id="duration" placeholder="e.g. 120" min="0">
+                </div>
+
+                <div class="checkbox-group">
+                    <label style="margin-right: 10px;">Flags:</label>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="flag_syn"> 
+                        <span>SYN (Start)</span>
+                    </div>
+                    
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="flag_fin"> 
+                        <span>FIN (End)</span>
+                    </div>
+
+                    <div class="checkbox-item">
+                        <input type="checkbox" id="flag_urg"> 
+                        <span>URG (Urgent)</span>
+                    </div>
+                </div>
+
+            </div>
+
+            <button class="analyze-btn" onclick="analyzeTraffic()">
+                <i class="fas fa-search"></i> Analyze Packet
+            </button>
+        </div>
+
+        <div id="resultArea" class="result-box">
+            <span id="statusBadge" class="badge">ANALYZING...</span>
+            <h3 id="mainFinding" style="color: #fff; margin-bottom: 10px;"></h3>
+            <p id="desc" style="color: var(--text-muted); font-size: 0.95rem;"></p>
+        </div>
+    </div>
+
+    <footer>&copy; 2025 AI CyberShield Matrix</footer>
+
+    <script>
+        async function analyzeTraffic() {
+            // 1. Gather Data from Form
+            const payload = {
+                protocol: document.getElementById('protocol').value,
+                service: document.getElementById('service').value,
+                packet_len: parseInt(document.getElementById('packet_len').value) || 0,
+                duration: parseInt(document.getElementById('duration').value) || 0,
+                flags: {
+                    SYN: document.getElementById('flag_syn').checked,
+                    FIN: document.getElementById('flag_fin').checked,
+                    URG: document.getElementById('flag_urg').checked
+                }
+            };
+
+            // 2. UI Updates
+            const resBox = document.getElementById('resultArea');
+            const badge = document.getElementById('statusBadge');
+            const finding = document.getElementById('mainFinding');
+            const desc = document.getElementById('desc');
+
+            resBox.style.display = 'block';
+            badge.className = 'badge';
+            badge.style.background = '#333';
+            badge.innerText = "PROCESSING...";
+            finding.innerText = "Analyzing packet headers...";
+            desc.innerText = "";
+
+            try {
+                // 3. Send to Backend
+                const response = await fetch('/api/network-analyzer', { // Note: using existing route logic
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ input: JSON.stringify(payload), mode: 'structured' }) 
+                });
+
+                const data = await response.json();
+
+                if(data.ok) {
+                    // 4. Display Results
+                    const risk = data.risk_level || "Safe";
+                    badge.innerText = risk.toUpperCase();
+                    
+                    // Dynamic Color
+                    if(risk === "High" || risk === "Malicious" || risk === "Critical") {
+                        badge.className = 'badge badge-MALICIOUS';
+                    } else {
+                        badge.className = 'badge badge-BENIGN';
+                    }
+
+                    finding.innerText = data.main_finding;
+                    
+                    // Show extra AI details if available
+                    if(data.data && data.data.anomaly_score) {
+                        desc.innerHTML = `Anomaly Confidence Score: <strong style="color:white">${data.data.anomaly_score}</strong>`;
+                    }
+                } else {
+                    finding.innerText = "Error: " + data.error;
+                }
+
+            } catch (e) {
+                console.error(e);
+                finding.innerText = "System Error: Backend connection failed.";
+            }
+        }
+    </script>
+</body>
+</html>

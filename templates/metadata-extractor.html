@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metadata Extractor - AI CyberShield</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #121212;
+            --card-bg: #1e1e1e;
+            --accent: #00aaff;
+            --text-main: #f3f4f6;
+            --border: #44475a;
+        }
+
+        body { font-family: 'Inter', sans-serif; background: var(--bg-dark); color: var(--text-main); display: flex; flex-direction: column; min-height: 100vh; margin: 0; }
+        .navbar { padding: 1rem 5%; background: var(--card-bg); border-bottom: 1px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: #fff; text-decoration: none; }
+        .back-btn { color: #9ca3af; text-decoration: none; }
+        
+        .container { max-width: 800px; margin: 3rem auto; padding: 0 1rem; flex-grow: 1; }
+        h1 { text-align: center; margin-bottom: 2rem; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+
+        .upload-area {
+            background: var(--card-bg);
+            border: 2px dashed var(--border);
+            border-radius: 12px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .upload-area:hover { border-color: var(--accent); background: rgba(16, 185, 129, 0.05); }
+        
+        .results-area { margin-top: 2rem; display: none; }
+        
+        .meta-group { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border); overflow: hidden; margin-bottom: 1.5rem; }
+        .meta-header { background: #111827; padding: 10px 15px; font-weight: 700; color: var(--accent); border-bottom: 1px solid var(--border); font-size: 0.9rem; text-transform: uppercase; }
+        .meta-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        .meta-table td { padding: 10px 15px; border-bottom: 1px solid #374151; }
+        .meta-table td:first-child { width: 40%; color: #9ca3af; font-family: 'JetBrains Mono', monospace; }
+        .meta-table tr:last-child td { border-bottom: none; }
+
+        input[type="file"] { display: none; }
+        .btn { padding: 10px 20px; background: var(--accent); border: none; border-radius: 6px; color: #000; font-weight: 700; cursor: pointer; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <a href="/dashboard" class="logo">/// META_EXTRACTOR</a>
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <h1>Hidden Data Viewer</h1>
+        
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-file-image fa-3x" style="color:var(--accent); margin-bottom:1rem;"></i>
+            <p>Click to Upload Image</p>
+            <small style="color:#6b7280">Supports JPG, PNG, TIFF, BMP</small>
+            <input type="file" id="fileInput" onchange="uploadFile()">
+        </div>
+
+        <div id="results" class="results-area">
+            </div>
+    </div>
+
+    <script>
+        async function uploadFile() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const resDiv = document.getElementById('results');
+            resDiv.style.display = 'block';
+            resDiv.innerHTML = '<p style="text-align:center; color:#fff;">Extracting binary headers...</p>';
+
+            try {
+                const response = await fetch('/api/upload_file/metadata-extractor', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (data.ok && data.data) {
+                    let html = "";
+                    
+                    // Render File Info
+                    if(data.data['File Info']) {
+                        html += buildTable("File System Info", data.data['File Info']);
+                    }
+                    
+                    // Render Image Attributes
+                    if(data.data['Image Attributes']) {
+                        html += buildTable("Image Attributes", data.data['Image Attributes']);
+                    }
+
+                    // Render EXIF
+                    if(data.data['EXIF Data']) {
+                        html += buildTable("EXIF Data (Camera/GPS)", data.data['EXIF Data']);
+                    }
+
+                    resDiv.innerHTML = html;
+                } else {
+                    resDiv.innerHTML = `<p style="color:red; text-align:center;">Error: ${data.error || 'Unknown error'}</p>`;
+                }
+            } catch (e) {
+                console.error(e);
+                resDiv.innerHTML = '<p style="color:red; text-align:center;">System Error.</p>';
+            }
+        }
+
+        function buildTable(title, dataObj) {
+            let rows = "";
+            for (const [key, val] of Object.entries(dataObj)) {
+                rows += `<tr><td>${key}</td><td>${val}</td></tr>`;
+            }
+            return `
+            <div class="meta-group">
+                <div class="meta-header">${title}</div>
+                <table class="meta-table">${rows}</table>
+            </div>`;
+        }
+    </script>
+</body>
+</html>

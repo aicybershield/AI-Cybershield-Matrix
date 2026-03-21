@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Text Encryptor</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Standard Dark Theme Styles */
+  body{font-family:'Poppins',sans-serif;background:#0b0f14;color:#dbe6f2;margin:0;padding:2rem;}
+  a{color:#7cc1ff;text-decoration:none}
+  .container{max-width:960px;margin:0 auto}
+  .card{background:linear-gradient(180deg,#111826,#0b0f14);border:1px solid #1e2a3a;border-radius:14px;padding:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  h1{color:#7cc1ff;margin:.2rem 0 1rem}
+  .note{color:#98a8c3;margin-bottom:1rem}
+  .field{margin:.75rem 0}
+  textarea, select{width:100%;background:#0d1420;color:#dbe6f2;border:1px solid #243247;border-radius:10px;padding:.75rem;margin-bottom:15px;}
+  .btn{display:inline-block;background:#1a73e8;color:#fff;padding:.65rem 1.1rem;border-radius:10px;border:none;cursor:pointer;font-weight:600; width: 100%;}
+  .btn:hover{filter:brightness(1.1)}
+  pre{background:#071018;color:#b6ffb3;border:1px solid #1c2a3c;border-radius:10px;padding:1rem;overflow:auto;max-height:400px}
+  .back{display:inline-block;margin-bottom:1rem}
+</style>
+
+</head>
+<body>
+<div class="container">
+<a class="back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<div class="card">
+<h1>Text Encryptor/Hasher</h1>
+<p class="note">Choose an operation mode below to encode, hash, or decode your input.</p>
+
+<div class="field">
+    <label for="modeSelector" style="display:block; margin-bottom: 5px;">Select Operation Mode:</label>
+    <select id="modeSelector">
+        <option value="base64_encode">Base64 Encode (Reversible)</option>
+        <option value="base64_decode">Base64 Decode (Reversible)</option>
+        <option value="hex_encode">Hex Encode (Reversible)</option>
+        <option value="hex_decode">Hex Decode (Reversible)</option>
+        <option value="sha256_hash">SHA-256 Hash (One-Way)</option>
+    </select>
+</div>
+
+<div class="field">
+    <textarea id="toolInput" rows="4" placeholder="Enter text or string to process..."></textarea>
+</div>
+
+<button class="btn" onclick="runTool('text-encryptor')">Process Input</button>
+
+<h3>Result</h3>
+<pre id="result">—</pre>
+</div>
+</div>
+
+<script>
+async function runTool(route) {
+    const inputEl = document.getElementById('toolInput'); 
+    const modeEl = document.getElementById('modeSelector');
+    const resultEl = document.getElementById('result');
+    
+    const rawInput = inputEl ? inputEl.value.trim() : '';
+    const mode = modeEl ? modeEl.value : 'base64_encode'; // Default to base64_encode
+
+    if (rawInput.length === 0) {
+        resultEl.textContent = 'Please provide text or a string to process.';
+        return;
+    }
+
+    resultEl.innerHTML = `<h4><span style="color: #00aaff;">Running ${mode.replace('_', ' ').toUpperCase()}...</span></h4>`;
+    
+    try {
+        const res = await fetch('/api/' + route, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            // CRITICAL: Send both the input and the selected mode
+            body: JSON.stringify({ 
+                input: rawInput, 
+                mode: mode 
+            }) 
+        });
+        
+        const data = await res.json();
+        
+        // --- Display Logic ---
+        if (data.ok === false) {
+             const errorMsg = data.error || data.raw_stderr || 'Unknown execution error.';
+             resultEl.innerHTML = `<h4><span style="color: #f44336;">EXECUTION FAILED</span></h4><pre>${errorMsg}</pre>`;
+             return;
+        }
+
+        const operation = data.mode.toUpperCase();
+        let color = data.ok ? '#4CAF50' : '#f44336';
+        
+        resultEl.innerHTML = `
+            <h4>Operation: <span style="color: ${color};">${operation}</span></h4>
+            <p><strong>Status:</strong> ${data.main_finding}</p>
+            
+            <details open>
+                <summary style="font-weight:600;">Output</summary>
+                <pre style="color: #b6ffb3; background: #071018;">${data.output}</pre>
+            </details>
+
+            <details>
+                <summary>Raw API Response</summary>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </details>
+        `;
+        
+    } catch (e) {
+        resultEl.innerHTML = `<h4><span style="color: #f44336;">NETWORK/PARSING ERROR</span></h4><pre>${e.message}</pre>`;
+    }
+}
+</script>
+
+</body>
+</html>

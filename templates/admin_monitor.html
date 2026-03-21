@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Activity Monitor | AI CyberShield</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* Global Styles matching Matrix Theme */
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #0b0f14;
+            color: #dbe6f2;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        a.back-btn {
+            color: #00aaff;
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 2rem;
+            transition: 0.3s;
+        }
+
+        a.back-btn:hover {
+            color: #fff;
+            transform: translateX(-5px);
+        }
+
+        h1 {
+            color: #fff;
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: #98a8c3;
+            margin-bottom: 3rem;
+        }
+
+        /* Card Container Styles */
+        .monitor-card {
+            background: linear-gradient(180deg, #111826, #0b0f14);
+            border: 1px solid #1e2a3a;
+            border-radius: 14px;
+            padding: 1.5rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .monitor-card h3 {
+            color: #00aaff;
+            margin-top: 0;
+            border-bottom: 1px solid #1e2a3a;
+            padding-bottom: 10px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px;
+            color: #98a8c3;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+            border-bottom: 2px solid #1e2a3a;
+        }
+
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #1e2a3a;
+            font-size: 0.9rem;
+        }
+
+        tr:hover {
+            background-color: rgba(0, 170, 255, 0.05);
+        }
+
+        /* Status Badges */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #1a73e8;
+            color: #fff;
+        }
+
+        .badge-admin { background-color: #ff8800; }
+        .badge-user { background-color: #1a73e8; }
+
+        /* Risk Colors */
+        .risk-High, .risk-Very-Strong { color: #ff4444; font-weight: bold; }
+        .risk-Medium { color: #ffbb33; }
+        .risk-Low, .risk-Clean { color: #00c851; }
+
+        /* Action Buttons */
+        .action-link {
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            transition: 0.3s;
+        }
+
+        .promote-btn { color: #00c851; border: 1px solid #00c851; }
+        .promote-btn:hover { background: #00c851; color: #fff; }
+
+        .delete-btn { color: #ff4444; border: 1px solid #ff4444; }
+        .delete-btn:hover { background: #ff4444; color: #fff; }
+
+        .self-label { color: #98a8c3; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <a href="{{ url_for('dashboard') }}" class="back-btn">← Back to Safety Dashboard</a>
+    
+    <h1>🛡️ Global Activity Monitor</h1>
+    <p class="subtitle">Real-time threat oversight and administrative user management console.</p>
+
+    <div class="monitor-card">
+        <h3>User Management Console</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Total Reports</th>
+                    <th>Administrative Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td><strong>{{ user.username }}</strong></td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <span class="badge {% if user.role == 'admin' %}badge-admin{% else %}badge-user{% endif %}">
+                            {{ user.role.upper() }}
+                        </span>
+                    </td>
+                    <td>{{ user.reports|length }}</td>
+                    <td>
+                        {% if user.id != current_user.id %}
+                            {% if user.role != 'admin' %}
+                            <a href="{{ url_for('promote_user', user_id=user.id) }}" class="action-link promote-btn">Promote to Admin</a>
+                            {% endif %}
+                            
+                            <a href="{{ url_for('delete_user', user_id=user.id) }}" 
+                               class="action-link delete-btn" 
+                               onclick="return confirm('WARNING: Are you sure you want to delete this user? All their scan reports will be permanently lost.')">
+                               Delete User
+                            </a>
+                        {% else %}
+                            <span class="self-label">Current Session</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="monitor-card">
+        <h3>Recent Threat Intelligence Logs</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Origin User</th>
+                    <th>Tool Utilized</th>
+                    <th>Input Data Summary</th>
+                    <th>Risk Level</th>
+                    <th>Timestamp (UTC)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if reports %}
+                    {% for report in reports %}
+                    <tr>
+                        <td>{{ report.author.username }}</td>
+                        <td><span style="color: #00aaff;">{{ report.tool_name }}</span></td>
+                        <td><code style="background: #071018; padding: 2px 5px; border-radius: 4px;">{{ report.input_data_summary[:50] }}{% if report.input_data_summary|length > 50 %}...{% endif %}</code></td>
+                        <td><span class="risk-{{ report.risk_level|replace(' ', '-') }}">{{ report.risk_level }}</span></td>
+                        <td>{{ report.scan_date.strftime('%Y-%m-%d | %H:%M:%S') }}</td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #98a8c3; padding: 30px;">No scan reports generated yet.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dark Web Checker - AI CyberShield</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --bg-dark: #121212; --card-bg: #1f1f1f; --accent: #00aaff; --text-main: #e0e0e0; --text-muted: #b0b0b0; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-dark); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        .navbar { padding: 1rem 5%; background: var(--card-bg); border-bottom: 2px solid var(--accent); display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: #fff; text-decoration: none; }
+        .back-btn { color: var(--text-muted); text-decoration: none; }
+        .back-btn:hover { color: var(--accent); }
+
+        .container { max-width: 800px; margin: 4rem auto; padding: 0 1rem; flex-grow: 1; }
+        .header-section { text-align: center; margin-bottom: 3rem; }
+        .header-section h1 { font-size: 2.5rem; color: #fff; }
+        
+        .tool-card { background: var(--card-bg); padding: 2rem; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .input-group { display: flex; gap: 10px; margin-top: 1rem; }
+        input { flex: 1; padding: 12px; background: #121212; border: 1px solid #444; color: white; border-radius: 6px; }
+        button { padding: 12px 25px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button:hover { background: #0088cc; }
+
+        .result-box { margin-top: 2rem; background: #1a1a1a; padding: 2rem; border-radius: 12px; border: 1px solid #333; display: none; }
+        .risk-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; background: #333; }
+        .risk-CRITICAL { color: #ff4444; border: 1px solid #ff4444; }
+        .risk-High { color: #ffaa00; border: 1px solid #ffaa00; }
+        .risk-Safe { color: #00ff88; border: 1px solid #00ff88; }
+
+        .breach-list { list-style: none; margin-top: 1rem; }
+        .breach-list li { background: rgba(255,68,68,0.1); padding: 10px; margin-bottom: 5px; border-left: 3px solid #ff4444; }
+        .breach-list li.safe { background: rgba(0,255,136,0.1); border-left: 3px solid #00ff88; }
+        
+        footer { text-align: center; padding: 2rem; color: #666; border-top: 1px solid #333; margin-top: auto; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="logo">AI CyberShield</a>
+        <a href="/dashboard" class="back-btn"><i class="fas fa-arrow-left"></i> Dashboard</a>
+    </nav>
+
+    <div class="container">
+        <div class="header-section">
+            <h1>Dark Web Monitor</h1>
+            <p>Scan for credential leaks and illicit pattern matches.</p>
+        </div>
+
+        <div class="tool-card">
+            <div class="input-group">
+                <input type="text" id="targetInput" placeholder="Enter email or keyword...">
+                <button onclick="runScan()">Scan</button>
+            </div>
+        </div>
+
+        <div id="resultArea" class="result-box">
+            <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+                <h3>Report</h3>
+                <span id="riskBadge" class="risk-badge">SCANNING...</span>
+            </div>
+            <p id="mainFinding" style="font-size: 1.1rem; color: #fff;"></p>
+            <p style="color:#888; font-size:0.9rem;">AI Threat Score: <span id="aiScore" style="color:#fff;">-</span></p>
+            
+            <h4 style="margin-top:1.5rem; color:#00aaff;">Database Hits:</h4>
+            <ul id="breachList" class="breach-list"></ul>
+        </div>
+    </div>
+
+    <footer>&copy; 2025 AI CyberShield Matrix</footer>
+
+    <script>
+        async function runScan() {
+            const input = document.getElementById('targetInput').value;
+            if(!input) return alert("Enter input");
+
+            document.getElementById('resultArea').style.display = 'block';
+            document.getElementById('riskBadge').innerText = "SCANNING...";
+            
+            try {
+                const res = await fetch('/api/dark-web-checker', {
+                    method: 'POST', 
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ input })
+                });
+                const data = await res.json();
+
+                if(data.ok) {
+                    document.getElementById('riskBadge').className = `risk-badge risk-${data.risk_level}`;
+                    document.getElementById('riskBadge').innerText = data.risk_level;
+                    document.getElementById('mainFinding').innerText = data.main_finding;
+                    document.getElementById('aiScore').innerText = data.data.ai_threat_score || "0%";
+
+                    const list = document.getElementById('breachList');
+                    const breaches = data.data.breaches_found || [];
+                    
+                    if(breaches.length > 0) {
+                        list.innerHTML = breaches.map(b => `<li><i class="fas fa-exclamation-triangle"></i> Found in: ${b}</li>`).join('');
+                    } else {
+                        list.innerHTML = `<li class="safe"><i class="fas fa-check"></i> No database leaks found.</li>`;
+                    }
+                } else {
+                    alert(data.error);
+                }
+            } catch(e) {
+                console.error(e);
+                document.getElementById('mainFinding').innerText = "System Error: Check console.";
+            }
+        }
+    </script>
+</body>
+</html>

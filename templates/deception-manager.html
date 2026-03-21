@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Deception Technology Manager</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet" />
+<style>
+  /* Standard Dark Theme Styles */
+  body{font-family:'Poppins',sans-serif;background:#0b0f14;color:#dbe6f2;margin:0;padding:2rem;}
+  a{color:#7cc1ff;text-decoration:none}
+  .container{max-width:960px;margin:0 auto}
+  .card{background:linear-gradient(180deg,#111826,#0b0f14);border:1px solid #1e2a3a;border-radius:14px;padding:1.25rem;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+  h1{color:#7cc1ff;margin:.2rem 0 1rem}
+  .note{color:#98a8c3;margin-bottom:1rem}
+  .field{margin:.75rem 0}
+  textarea{width:100%;background:#0d1420;color:#e0e0e0;border:1px solid #243247;border-radius:10px;padding:.75rem;font-family: 'Consolas', monospace;}
+  .btn{display:inline-block;background:#1a73e8;color:#fff;padding:.65rem 1.1rem;border-radius:10px;border:none;cursor:pointer;font-weight:600}
+  .btn:hover{filter:brightness(1.1)}
+  pre{background:#071018;color:#b6ffb3;border:1px solid #1c2a3c;border-radius:10px;padding:1rem;overflow:auto;max-height:400px}
+  .back{display:inline-block;margin-bottom:1rem}
+</style>
+
+</head>
+<body>
+<div class="container">
+<a class="back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+<div class="card">
+<h1>Deception Technology Manager (RL Sim.)</h1>
+<p class="note">Uses a Reinforcement Learning policy model to recommend the optimal decoy placement strategy for the current threat state.</p>
+<div class="field">
+<textarea id="toolInput" rows="7" placeholder='Enter current threat state features (JSON format): 
+{
+"asset_value": 3,
+"attacker_familiarity": 1,
+"time_since_last_attack": 1 
+}'></textarea>
+</div>
+<button class="btn" onclick="runTool('deception-manager')">Get Optimal Decoy Action</button>
+<h3>Result</h3>
+<pre id="result">—</pre>
+</div>
+</div>
+<script>
+async function runTool(route) {
+    const inputEl = document.getElementById('toolInput'); 
+    const resultEl = document.getElementById('result');
+    const rawInput = inputEl ? inputEl.value.trim() : '';
+
+    if (!rawInput) {
+        resultEl.textContent = 'Please provide threat state data in JSON format.';
+        return;
+    }
+
+    resultEl.innerHTML = '<h4><span style="color: #00aaff;">Consulting Deception Policy...</span></h4>';
+    
+    try {
+        const res = await fetch('/api/' + route, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({ input: rawInput }) 
+        });
+        
+        const data = await res.json();
+        
+        if (data.ok === false) {
+             const errorMsg = data.error || data.raw_stderr || 'Unknown execution error.';
+             resultEl.innerHTML = `<h4><span style="color: #f44336;">EXECUTION FAILED</span></h4><pre>${errorMsg}</pre>`;
+             return;
+        }
+
+        const action = data.tool_prediction || "N/A";
+        let color = '#4CAF50'; 
+        
+        if (action.includes("Credential")) {
+            color = '#ff9800'; 
+        } else if (action.includes("Network")) {
+            color = '#1a73e8'; 
+        }
+        
+        resultEl.innerHTML = `
+            <h4>Optimal Action: <span style="color: ${color};">${action.replace('_', ' ')}</span></h4>
+            <p><strong>Main Finding:</strong> ${data.main_finding || 'Policy analysis completed.'}</p>
+            ${data.confidence_score ? `<p><strong>Confidence:</strong> ${(data.confidence_score * 100).toFixed(2)}%</p>` : ''}
+            
+            <details>
+                <summary>RL Policy Details</summary>
+                <pre>${JSON.stringify(data, null, 2)}</pre>
+            </details>
+        `;
+        
+    } catch (e) {
+        resultEl.innerHTML = `<h4><span style="color: #f44336;">NETWORK/PARSING ERROR</span></h4><pre>${e.message}</pre>`;
+    }
+}
+</script>
+</body>
+</html>

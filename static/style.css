@@ -1,0 +1,364 @@
+/* --- style.css: FINAL STYLESHEET FOR AI CYBERSHIELD MATRIX --- */
+
+/* 1. Import Font */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+/* Basic Reset and Global Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Poppins", sans-serif;
+    line-height: 1.6;
+    background-color: #121212;
+    color: #e0e0e0;
+}
+
+h1,
+h2,
+h3 {
+    font-weight: 600;
+}
+
+a {
+    text-decoration: none;
+    color: #00aaff;
+}
+
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 5%;
+    background-color: #1f1f1f;
+    border-bottom: 2px solid #00aaff;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+/* NEW: Logo Styling */
+.logo-container {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    padding: 0;
+    margin-right: 20px; /* Space between logo and menu */
+}
+
+.logo-img {
+    height: 40px; /* Fixed height for branding */
+    width: auto;
+}
+
+.nav-controls {
+    display: flex;
+    align-items: center;
+}
+
+.user-greeting {
+    margin-right: 1.5rem;
+    font-size: 1rem;
+    color: #00aaff;
+    font-weight: 600;
+}
+
+.menu-button {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+}
+
+.menu-items {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 5%;
+    background-color: #1f1f1f;
+    border: 1px solid #00aaff;
+    border-top: none;
+    padding: 1rem;
+    border-radius: 0 0 5px 5px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.menu-items.show {
+    display: block;
+}
+
+.menu-items ul {
+    list-style: none;
+}
+
+.menu-items ul li {
+    margin-bottom: 0.5rem;
+}
+
+.menu-items ul li a {
+    color: #e0e0e0;
+    display: block;
+    padding: 0.5rem 1rem;
+}
+
+.menu-items ul li a:hover {
+    background-color: #00aaff;
+    color: #fff;
+    border-radius: 3px;
+}
+
+.auth-link {
+    display: block;
+    padding: 0.5rem 1rem;
+    background-color: #4CAF50; /* Green for login */
+    color: white !important;
+    border-radius: 5px;
+    text-align: center;
+    margin-top: 0.5rem;
+}
+
+.logout-link {
+    background-color: #f44336; /* Red for logout */
+}
+
+/* Hero Section with Video Background */
+.hero-section {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+    position: relative;
+    color: #fff;
+    overflow: hidden;
+}
+
+.hero-section.hidden {
+    display: none;
+}
+
+.hero-video {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    min-width: 100%;
+    min-height: 100%;
+    width: auto;
+    height: auto;
+    transform: translate(-50%, -50%);
+    z-index: 0;
+    object-fit: cover;
+}
+
+.hero-section::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 1;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 2;
+    max-width: 800px;
+    padding: 2rem;
+}
+
+.hero-content h1 {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.hero-content p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+
+.cta-button {
+    background-color: #00aaff;
+    color: #fff;
+    padding: 0.8rem 2rem;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.cta-button:hover {
+    background-color: #0077cc;
+}
+
+/* Tools Section */
+.tools-section {
+    padding: 4rem 5%;
+    text-align: center;
+    display: none;
+}
+
+.tools-section.show {
+    display: block;
+}
+
+/* New Menu Styles */
+.section-menu {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 40px;
+}
+
+.section-btn {
+    background-color: #1f1f1f;
+    color: #00aaff;
+    border: 1px solid #00aaff;
+    padding: 12px 25px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s, color 0.3s;
+    flex: 1 1 200px; /* Allow buttons to wrap and have minimum size */
+}
+
+.section-btn.active, .section-btn:hover {
+    background-color: #00aaff;
+    color: #1f1f1f;
+    box-shadow: 0 0 10px rgba(0, 170, 255, 0.5);
+}
+
+.tools-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 3rem;
+    color: #fff;
+}
+
+/* Content Block Styles */
+.tool-content-block {
+    text-align: left;
+    margin-bottom: 3rem;
+    display: none; /* Hidden by default */
+}
+
+.tool-content-block.show {
+    display: block;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+/* ENFORCING SAME CARD SIZE (FIXED ALIGNMENT) */
+.tool-card {
+    background-color: #1f1f1f;
+    border: 1px solid #333;
+    padding: 2rem;
+    border-radius: 10px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* CRITICAL: Distributes space evenly */
+    height: 260px; /* FIXED HEIGHT */
+}
+
+.tool-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+}
+
+.tool-card h3 {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #00aaff;
+}
+
+.tool-card p {
+    /* FIX: Ensure vertical margins/paddings don't push the link out */
+    margin-top: 0.5rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+    flex-grow: 1; /* Allows text content to push link down */
+}
+
+.tool-link {
+    display: block;
+    text-align: center;
+    background-color: #00aaff;
+    color: #fff;
+    padding: 0.5rem 1.5rem;
+    border-radius: 5px;
+    font-weight: 600;
+    transition: background-color 0.3s ease;
+}
+
+.tool-link:hover {
+    background-color: #0077cc;
+}
+
+/* About Section (initially hidden) */
+.about-section {
+    padding: 4rem 5%;
+    background-color: #1f1f1f;
+    text-align: center;
+    display: none;
+}
+
+.about-section.show {
+    display: block;
+}
+
+.about-section h2 {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: #fff;
+}
+
+.about-section p {
+    max-width: 800px;
+    margin: 0 auto;
+    color: #b0b0b0;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 2rem 5%;
+    background-color: #1f1f1f;
+    border-top: 1px solid #333;
+}
+
+.footer-info {
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    line-height: 1.8;
+    color: #b0b0b0;
+}
+
+.footer-info h4 {
+    margin-top: 1rem;
+    color: #fff;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .navbar {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+    .section-menu {
+        flex-direction: column;
+    }
+    .tool-card {
+        height: auto; /* Remove fixed height on mobile */
+    }
+}
