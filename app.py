@@ -43,7 +43,7 @@ app.config['SECRET_KEY'] = 'your_long_and_complex_secret_key_1234567890'
 
 # --- MONGODB DATABASE CONFIGURATION ---
 # Fetches your secure URL from Render, or falls back to localhost if running locally
-MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
+MONGO_URI = os.getenv("mongodb+srv://Aicybershield2026:Aicybershield2026@cluster0.e7jofnz.mongodb.net/?appName=Cluster0", "mongodb://localhost:27017/")
 client = MongoClient(MONGO_URI)
 db = client["aicybershield_db"]
 users_collection = db["users"]
