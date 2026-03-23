@@ -4,7 +4,6 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename 
 from datetime import datetime
 from functools import wraps
-from flask_mail import Mail, Message
 from random import randint
 from pymongo import MongoClient
 from bson.objectid import ObjectId
@@ -17,6 +16,7 @@ import logging
 import json 
 import hashlib 
 import numpy as np 
+import resend
 
 # Set logging level for visibility
 logging.basicConfig(level=logging.INFO)
@@ -24,13 +24,9 @@ logging.basicConfig(level=logging.INFO)
 # --- CONFIGURATION & INITIALIZATION ---
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# --- EMAIL CONFIGURATION ---
-app.config['MAIL_SERVER'] = 'smtp.gmail.com'
-app.config['MAIL_PORT'] = 587
-app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'Aicybershield.verify@gmail.com'
-app.config['MAIL_PASSWORD'] = 'egku qsai lulg ugdu'
-mail = Mail(app)
+# --- RESEND EMAIL API CONFIGURATION ---
+# Fetches your secure Resend API Key from Render
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 # --- FILE UPLOAD CONFIGURATION ---
 UPLOAD_FOLDER = 'uploads/' 
@@ -118,14 +114,18 @@ def register():
         if existing_user:
             return render_template('register.html', error="Username already exists.")
 
+        # Generate 6-digit OTP
         otp = randint(100000, 999999)
 
+        # --- NEW RESEND API LOGIC ---
         try:
-            msg = Message('Verify Your Account - AI CyberShield', 
-                          sender=app.config['MAIL_USERNAME'], 
-                          recipients=[email])
-            msg.body = f"Hello {username},\n\nWelcome to AI CyberShield Matrix!\n\nYour OTP for registration is: {otp}\n\nPlease enter this code to complete your signup.\n\nRegards,\nAI CyberShield Team"
-            mail.send(msg)
+            params = {
+                "from": "AI CyberShield <onboarding@resend.dev>", 
+                "to": [email], # Note: Must be your verified Resend email during sandbox testing!
+                "subject": "Verify Your Account - AI CyberShield Matrix",
+                "html": f"<p>Hello {username},</p><p>Welcome to AI CyberShield Matrix!</p><p>Your OTP for registration is: <strong>{otp}</strong></p><p>Please enter this code to complete your signup.</p>"
+            }
+            resend.Emails.send(params)
         except Exception as e:
             return render_template('register.html', error=f"Email sending failed: {str(e)}")
 
