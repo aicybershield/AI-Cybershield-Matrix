@@ -1,12 +1,13 @@
-from flask import Flask, render_template, request, jsonify, redirect, url_for, session, abort
+from flask import Flask, render_template, request, jsonify, redirect, url_for, session
+from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename 
 from datetime import datetime
 from functools import wraps
+from flask import abort
+from flask_mail import Mail, Message
 from random import randint
-from pymongo import MongoClient
-from bson.objectid import ObjectId
 import subprocess
 import os
 import shlex
@@ -16,7 +17,6 @@ import logging
 import json 
 import hashlib 
 import numpy as np 
-import resend
 
 # Set logging level for visibility
 logging.basicConfig(level=logging.INFO)
@@ -24,49 +24,57 @@ logging.basicConfig(level=logging.INFO)
 # --- CONFIGURATION & INITIALIZATION ---
 app = Flask(__name__, template_folder='templates', static_folder='static')
 
-# --- RESEND EMAIL API CONFIGURATION ---
-# Fetches your secure Resend API Key from Render
-resend.api_key = os.getenv("RESEND_API_KEY")
+# --- EMAIL CONFIGURATION ---
+app.config['MAIL_SERVER'] = 'smtp.gmail.com'
+app.config['MAIL_PORT'] = 587
+app.config['MAIL_USE_TLS'] = True
+app.config['MAIL_USERNAME'] = 'Aicybershield.verify@gmail.com'  # Your Project Email
+app.config['MAIL_PASSWORD'] = 'egku qsai lulg ugdu'             # Your App Password
+mail = Mail(app)
 
 # --- FILE UPLOAD CONFIGURATION ---
 UPLOAD_FOLDER = 'uploads/' 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'mp4', 'avi', 'mov', 'webm', 'tiff'} 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024 
+app.config['MAX_CONTENT_LENGTH'] = 128 * 1024 * 1024 # 128MB max upload
 
-# SECURITY CRITICAL: CHANGE THIS KEY LATER! 
+# SECURITY CRITICAL: CHANGE THIS KEY! 
 app.config['SECRET_KEY'] = 'your_long_and_complex_secret_key_1234567890'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# --- MONGODB DATABASE CONFIGURATION ---
-# Fetches your secure URL from Render, or falls back to localhost if running locally
-MONGO_URI = os.getenv("mongodb+srv://Aicybershield2026:Aicybershield2026@cluster0.e7jofnz.mongodb.net/?appName=Cluster0", "mongodb://localhost:27017/")
-client = MongoClient(MONGO_URI)
-db = client["aicybershield_db"]
-users_collection = db["users"]
-reports_collection = db["reports"]
-
+db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login' 
 login_manager.login_message_category = "info" 
 
-# --- FLASK-LOGIN CUSTOM USER CLASS (Replaces SQLAlchemy Model) ---
-class User(UserMixin):
-    def __init__(self, user_data):
-        self.id = str(user_data.get('_id'))
-        self.username = user_data.get('username')
-        self.email = user_data.get('email')
-        self.password_hash = user_data.get('password_hash')
-        self.role = user_data.get('role', 'user')
+# --- DATABASE MODELS ---
+class User(db.Model, UserMixin):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    role = db.Column(db.String(20), default='user')
+    reports = db.relationship('ScanReport', backref='author', lazy=True)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+    
+    def get_id(self):
+        return str(self.id)
 
-    @staticmethod
-    def get_by_id(user_id):
-        user_data = users_collection.find_one({"_id": ObjectId(user_id)})
-        if user_data:
-            return User(user_data)
-        return None
+class ScanReport(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    tool_name = db.Column(db.String(50), nullable=False)
+    input_data_summary = db.Column(db.Text, nullable=False)
+    risk_level = db.Column(db.String(20), nullable=True) 
+    main_finding = db.Column(db.String(255), nullable=True)
+    report_data = db.Column(db.Text, nullable=False) 
+    scan_date = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
 # --- FILE UPLOAD HELPER ---
 def allowed_file(filename):
@@ -76,7 +84,7 @@ def allowed_file(filename):
 # --- FLASK-LOGIN USER LOADER ---
 @login_manager.user_loader
 def load_user(user_id):
-    return User.get_by_id(user_id)
+    return User.query.get(int(user_id))
 
 # --- AUTHENTICATION ROUTES ---
 @app.route('/')
@@ -90,18 +98,16 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     if request.method == 'POST':
-        # Search MongoDB for the email
-        user_data = users_collection.find_one({"email": request.form.get('email')})
-        if user_data:
-            user = User(user_data)
-            if user.check_password(request.form.get('password')):
-                login_user(user, remember=True)
-                return redirect(url_for('dashboard')) 
-        
-        error_message = 'Invalid email or password.'
-        return render_template('login.html', error=error_message)
+        user = User.query.filter_by(email=request.form.get('email')).first()
+        if user and user.check_password(request.form.get('password')):
+            login_user(user, remember=True)
+            return redirect(url_for('dashboard')) 
+        else:
+            error_message = 'Invalid email or password.'
+            return render_template('login.html', error=error_message)
     return render_template('login.html')
 
+# --- 1. REGISTRATION ROUTE (Step 1: Send OTP) ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -109,65 +115,82 @@ def register():
         email = request.form['email']
         password = request.form['password']
         
-        # Check if user already exists in MongoDB
-        existing_user = users_collection.find_one({"username": username})
+        # Check if user already exists
+        existing_user = User.query.filter_by(username=username).first()
         if existing_user:
             return render_template('register.html', error="Username already exists.")
 
         # Generate 6-digit OTP
         otp = randint(100000, 999999)
 
-        # --- NEW RESEND API LOGIC ---
+        # Send Email
         try:
-            params = {
-                "from": "AI CyberShield <onboarding@resend.dev>", 
-                "to": [email], # Note: Must be your verified Resend email during sandbox testing!
-                "subject": "Verify Your Account - AI CyberShield Matrix",
-                "html": f"<p>Hello {username},</p><p>Welcome to AI CyberShield Matrix!</p><p>Your OTP for registration is: <strong>{otp}</strong></p><p>Please enter this code to complete your signup.</p>"
-            }
-            resend.Emails.send(params)
+            msg = Message('Verify Your Account - AI CyberShield', 
+                          sender=app.config['MAIL_USERNAME'], 
+                          recipients=[email])
+            msg.body = f"Hello {username},\n\nWelcome to AI CyberShield Matrix!\n\nYour OTP for registration is: {otp}\n\nPlease enter this code to complete your signup.\n\nRegards,\nAI CyberShield Team"
+            mail.send(msg)
         except Exception as e:
+            # If email fails, show error on page
             return render_template('register.html', error=f"Email sending failed: {str(e)}")
 
+        # Store data in Session (Temporary storage until verified)
         session['temp_user'] = {
             'username': username,
             'email': email,
+            # FIXED: Removed method='sha256' to prevent ValueError in newer Flask versions
             'password': generate_password_hash(password), 
             'otp': otp
         }
+
         return redirect(url_for('verify_otp'))
+
     return render_template('register.html')
 
+
+# --- 2. OTP VERIFICATION ROUTE (Step 2: Save to DB) ---
 @app.route('/verify_otp', methods=['GET', 'POST'])
 def verify_otp():
+    # Security: If no registration data is in session, kick them back to register
     if 'temp_user' not in session:
         return redirect(url_for('register'))
 
     if request.method == 'POST':
+        # Get the OTP from the form safely
         user_otp = request.form.get('otp')
         
+        # DEBUGGING: Print what was received to your terminal
+        print(f"DEBUG: User entered OTP: '{user_otp}'")
+
+        # Check 1: Did they enter nothing?
         if not user_otp:
             return render_template('otp_verify.html', error="Please enter the OTP.")
 
         stored_data = session['temp_user']
 
         try:
+            # Check 2: Convert to integer and compare
+            # .strip() removes accidental spaces like " 123456 "
             if int(user_otp.strip()) == int(stored_data['otp']):
                 
-                # --- SUCCESS: SAVE TO MONGODB ---
-                users_collection.insert_one({
-                    "username": stored_data['username'],
-                    "email": stored_data['email'],
-                    "password_hash": stored_data['password'],
-                    "role": "user"
-                })
+                # --- SUCCESS: SAVE TO DB ---
+                new_user = User(
+                    username=stored_data['username'], 
+                    email=stored_data['email'], 
+                    password_hash=stored_data['password'] # Already hashed
+                )
+                db.session.add(new_user)
+                db.session.commit()
                 
+                # Clear session and login
                 session.pop('temp_user', None)
                 return redirect(url_for('login'))
+            
             else:
                 return render_template('otp_verify.html', error="Wrong Code. Please check your email again.")
 
         except ValueError:
+            # This catches "abc", symbols, or weird formats
             return render_template('otp_verify.html', error="Invalid format. Please enter numbers only.")
 
     return render_template('otp_verify.html')
@@ -184,36 +207,30 @@ def admin_required(f):
 @login_required
 @admin_required
 def admin_monitor():
-    # Fetch all reports and sort by date descending
-    all_reports = list(reports_collection.find().sort("scan_date", -1))
-    for r in all_reports:
-        r['id'] = str(r['_id']) # Format ID for Jinja template
-        author = users_collection.find_one({"_id": ObjectId(r['user_id'])})
-        r['author'] = {'username': author['username'] if author else 'Unknown'}
-
-    all_users = list(users_collection.find())
-    for u in all_users:
-        u['id'] = str(u['_id'])
-        
+    all_reports = ScanReport.query.order_by(ScanReport.scan_date.desc()).all()
+    all_users = User.query.all()
     return render_template('admin_monitor.html', reports=all_reports, users=all_users)
 
-@app.route('/admin/promote/<user_id>')
+@app.route('/admin/promote/<int:user_id>')
 @login_required
 @admin_required
 def promote_user(user_id):
-    users_collection.update_one({"_id": ObjectId(user_id)}, {"$set": {"role": "admin"}})
+    user = User.query.get_or_404(user_id)
+    user.role = 'admin'
+    db.session.commit()
     return redirect(url_for('admin_monitor'))
 
-@app.route('/admin/delete_user/<user_id>')
+@app.route('/admin/delete_user/<int:user_id>')
 @login_required
 @admin_required
 def delete_user(user_id):
-    if user_id == current_user.id:
+    user = User.query.get_or_404(user_id)
+    if user.id == current_user.id:
         return "Error: You cannot delete your own admin account.", 400
     
-    # Delete user and their associated reports
-    users_collection.delete_one({"_id": ObjectId(user_id)})
-    reports_collection.delete_many({"user_id": user_id})
+    ScanReport.query.filter_by(user_id=user.id).delete()
+    db.session.delete(user)
+    db.session.commit()
     return redirect(url_for('admin_monitor'))
 
 @app.route('/logout')
@@ -226,26 +243,22 @@ def logout():
 @app.route('/history')
 @login_required
 def history():
-    reports = list(reports_collection.find({"user_id": current_user.id}).sort("scan_date", -1))
-    for r in reports:
-        r['id'] = str(r['_id'])
+    reports = ScanReport.query.filter_by(user_id=current_user.id).order_by(ScanReport.scan_date.desc()).all()
     return render_template('history.html', reports=reports)
 
-@app.route('/report/<report_id>')
+@app.route('/report/<int:report_id>')
 @login_required
 def view_report(report_id):
-    report = reports_collection.find_one({"_id": ObjectId(report_id), "user_id": current_user.id})
-    if not report:
-        abort(404)
-        
-    report['id'] = str(report['_id'])
+    report = ScanReport.query.filter_by(id=report_id, user_id=current_user.id).first_or_404()
     try:
-        report['report_data_json'] = json.loads(report['report_data']) 
+        report.report_data_json = json.loads(report.report_data) 
     except json.JSONDecodeError:
-        report['report_data_json'] = {"error": "Corrupt report data."}
+        report.report_data_json = {"error": "Corrupt report data."}
     return render_template('full_report_viewer.html', report=report) 
 
+
 # --- CORE APP ROUTES ---
+
 @app.route('/dashboard')
 @login_required
 def dashboard():
@@ -257,23 +270,37 @@ def dashboard():
 def ai_core_page():
     return render_template('ai-core.html')
 
+
 # Helper function to run backend scripts
 def run_tool(command_list, cwd=None):
     try:
         completed = subprocess.run(
-            command_list, cwd=cwd, capture_output=True, text=True, timeout=120, check=True
+            command_list,
+            cwd=cwd,
+            capture_output=True,
+            text=True,
+            timeout=120, 
+            check=True
         )
-        return {"ok": True, "stdout": completed.stdout.strip(), "stderr": completed.stderr.strip(), "returncode": completed.returncode}
+        return {
+            "ok": True,
+            "stdout": completed.stdout.strip(),
+            "stderr": completed.stderr.strip(),
+            "returncode": completed.returncode
+        }
     except subprocess.CalledProcessError as e:
-        error_output = e.stderr.strip() or e.stdout.strip() or 'Unknown backend error.'
+        error_output = e.stderr.strip() or e.stdout.strip() or 'Unknown backend error. Check stdout/stderr for clues.'
         return {"ok": False, "error": f"Tool failed: {error_output}", "raw_stderr": e.stderr.strip()}
     except subprocess.TimeoutExpired:
         return {"ok": False, "error": "Tool timed out after 120s. Try a smaller file."}
     except FileNotFoundError:
-        return {"ok": False, "error": "Backend script or Python interpreter not found."}
+        return {"ok": False, "error": "Backend script or Python interpreter not found. Check virtual environment path."}
     except Exception as e:
+        logging.error(f"Error running tool: {e}")
         return {"ok": False, "error": f"OS Error: {str(e)}"}
 
+
+# Tool page routes (dynamically generated)
 pages = {
     'phishing-detector': 'phishing-detector.html', 
     'dark-web-checker': 'dark-web-checker.html',
@@ -300,6 +327,7 @@ def make_tool_route(template_name):
 for route, template in pages.items():
     app.add_url_rule(f'/{route}', view_func=make_tool_route(template), endpoint=route)
 
+# Define tool mappings for external scripts
 tool_map = {
     'phishing-detector': ('Phishing_Detector_Tool', 'python main.py'),
     'dark-web-checker': ('Dark_Web_Checker', 'python main.py'),
@@ -316,6 +344,7 @@ tool_map = {
     'data-poisoning-monitor': ('Data_Poisoning_Monitor', 'python main.py'),
     'metadata-extractor': ('Metadata_Extractor', 'python main.py'),
 }
+
 
 # --- 1. API ROUTE FOR FILE UPLOADS ---
 @app.route('/api/upload_file/<tool>', methods=['POST'])
@@ -341,9 +370,12 @@ def api_file_upload(tool):
             return jsonify({"ok": False, "error": f"Failed to save file: {str(e)}"}), 500
         
         absolute_filepath = os.path.abspath(filepath)
+        
         folder, command = tool_map.get(tool, (None, None))
+        
         final_report_json = None
         
+        # --- LOGIC FOR EXTERNAL SCRIPT TOOLS ---
         if folder and folder != 'internal': 
             backend_base = os.path.join(os.path.dirname(__file__), 'backend')
             PYTHON_EXECUTABLE = 'python' 
@@ -351,10 +383,11 @@ def api_file_upload(tool):
             parts = shlex.split(command) 
             
             command_list = [PYTHON_EXECUTABLE] + parts[1:]
-            command_list.append(absolute_filepath) 
+            command_list.append(absolute_filepath) # Pass the absolute path
             
             result_dict = run_tool(command_list, cwd=cwd)
 
+            # Cleanup
             try:
                 os.remove(absolute_filepath) 
             except OSError as e:
@@ -371,20 +404,22 @@ def api_file_upload(tool):
         elif folder == 'internal':
              return jsonify({"ok": False, "error": "This file tool is not configured correctly."}), 400
 
-        # --- DATABASE PERSISTENCE FOR FILES ---
+        # --- DATABASE PERSISTENCE ---
         if final_report_json and final_report_json.get('ok') and current_user.is_authenticated:
             try:
                 report_data_str = json.dumps(final_report_json, default=lambda o: float(o) if isinstance(o, (np.float32, np.float64, np.int32, np.int64)) else o.__dict__)
-                reports_collection.insert_one({
-                    "user_id": current_user.id,
-                    "tool_name": final_report_json.get('tool', tool),
-                    "input_data_summary": f"File: {filename}",
-                    "risk_level": final_report_json.get('risk_level', 'N/A'),
-                    "main_finding": final_report_json.get('main_finding', 'Analysis saved, finding unavailable.'),
-                    "report_data": report_data_str,
-                    "scan_date": datetime.utcnow()
-                })
+                new_report = ScanReport(
+                    user_id=current_user.id,
+                    tool_name=final_report_json.get('tool', tool),
+                    input_data_summary=f"File: {filename}",
+                    risk_level=final_report_json.get('risk_level', 'N/A'),
+                    main_finding=final_report_json.get('main_finding', 'Analysis saved, finding unavailable.'),
+                    report_data=report_data_str
+                )
+                db.session.add(new_report)
+                db.session.commit()
             except Exception as e:
+                db.session.rollback()
                 logging.error(f"FATAL DB LOGGING ERROR for file tool {tool}: {e}")
 
         if final_report_json:
@@ -393,6 +428,7 @@ def api_file_upload(tool):
              return jsonify({"ok": False, "error": "Unknown processing error."}), 500
 
     return jsonify({"ok": False, "error": "File type not allowed."}), 400
+
 
 # --- 2. EXISTING API ROUTE FOR TEXT/JSON INPUTS ---
 @app.post('/api/<tool>')
@@ -403,37 +439,70 @@ def api_tool(tool):
     user_mode = data.get('mode', '') 
     
     final_report_json = None
+    
     folder, command = tool_map.get(tool, (None, None))
     backend_base = os.path.join(os.path.dirname(__file__), 'backend')
     
+    # --- Execute Tool (Internal or External) ---
     if folder == 'internal':
+        # --- Internal logic for Password, BugHunter, Encryptor/Hasher ---
         if command == 'password':
+            # --- START PASSWORD ANALYZER LOGIC ---
             if not user_input:
                 final_report_json = {
-                    "tool": "Password Analyzer (Rule)", "ok": False, "risk_level": "ERROR", 
-                    "main_finding": "Input password cannot be empty.", "confidence_score": 0.0, "input_received": user_input
+                    "tool": "Password Analyzer (Rule)", 
+                    "ok": False, 
+                    "risk_level": "ERROR", 
+                    "main_finding": "Input password cannot be empty.",
+                    "confidence_score": 0.0,
+                    "input_received": user_input,
                 }
             else:
                 score = 0
                 features = {}
-                if len(user_input) >= 8: score += 1; features['length_check'] = 'PASS'
+                
+                # Rule 1: Length >= 8
+                if len(user_input) >= 8: 
+                    score += 1
+                    features['length_check'] = 'PASS'
                 else: features['length_check'] = 'FAIL'
-                if re.search(r'[A-Z]', user_input): score += 1; features['uppercase_check'] = 'PASS'
+
+                # Rule 2: Uppercase
+                if re.search(r'[A-Z]', user_input): 
+                    score += 1
+                    features['uppercase_check'] = 'PASS'
                 else: features['uppercase_check'] = 'FAIL'
-                if re.search(r'[0-9]', user_input): score += 1; features['digit_check'] = 'PASS'
+                
+                # Rule 3: Digits
+                if re.search(r'[0-9]', user_input): 
+                    score += 1
+                    features['digit_check'] = 'PASS'
                 else: features['digit_check'] = 'FAIL'
-                if re.search(r'[^A-Za-z0-9]', user_input): score += 1; features['special_char_check'] = 'PASS'
+
+                # Rule 4: Special Characters
+                if re.search(r'[^A-Za-z0-9]', user_input): 
+                    score += 1
+                    features['special_char_check'] = 'PASS'
                 else: features['special_char_check'] = 'FAIL'
 
                 strength_levels = ["Very Weak", "Weak", "Medium", "Strong", "Very Strong"]
                 strength = strength_levels[score]
                 
+                confidence = float(score / 4.0) 
+                
                 final_report_json = {
-                    "tool": "Password Analyzer (Rule)", "ok": True, "risk_level": strength, 
-                    "tool_prediction": strength, "main_finding": f"Strength assessed as {strength} based on 4 security rules.",
-                    "confidence_score": float(score / 4.0), "input_received": user_input,
-                    "advanced_report_details": {"features_analyzed": features}
+                    "tool": "Password Analyzer (Rule)", 
+                    "ok": True, 
+                    "risk_level": strength, 
+                    "tool_prediction": strength,
+                    "main_finding": f"Strength assessed as {strength} based on 4 security rules.",
+                    "confidence_score": confidence,
+                    "input_received": user_input,
+                    "advanced_report_details": {
+                        "features_analyzed": features
+                    }
                 }
+            # --- END PASSWORD ANALYZER LOGIC ---
 
         elif command == 'bughunter':
             issues = []
@@ -457,7 +526,9 @@ def api_tool(tool):
             except Exception as e:
                 output = f"Error: {str(e)}"; ok = False
             
-            final_report_json = {"tool": "Text Encryptor/Hasher", "mode": action, "output": output, "ok": ok, "risk_level": "N/A", "main_finding": f"Operation '{action}' was successful." if ok else f"Operation '{action}' failed."}
+            risk = "N/A"
+            main_finding = f"Operation '{action}' was successful." if ok else f"Operation '{action}' failed."
+            final_report_json = {"tool": "Text Encryptor/Hasher", "mode": action, "output": output, "ok": ok, "risk_level": risk, "main_finding": main_finding}
         
         if final_report_json and not final_report_json.get('ok'):
              return jsonify(final_report_json), 400
@@ -469,7 +540,8 @@ def api_tool(tool):
         command_list = [PYTHON_EXECUTABLE] + parts[1:]
         
         if user_input:
-            command_list.append(shlex.quote(user_input))
+            quoted_input = shlex.quote(user_input)
+            command_list.append(quoted_input)
             
         result_dict = run_tool(command_list, cwd=cwd)
 
@@ -480,30 +552,37 @@ def api_tool(tool):
                 return jsonify({"ok": False, "error": "Backend script returned invalid JSON.", "raw_output": result_dict.get('stdout')}), 500
         else:
              return jsonify({"ok": False, "error": result_dict.get('error', 'Execution failed.'), "raw_stderr": result_dict.get('raw_stderr', '')}), 500
+        
     else:
         final_report_json = {"ok": True, "tool": tool, "main_finding": "No server-side processing required for this tool."}
 
-    # --- DATABASE PERSISTENCE FOR TEXT INPUTS ---
+    # --- Database Persistence (Logging) ---
     if final_report_json and final_report_json.get('ok') and current_user.is_authenticated:
         try:
             report_data_str = json.dumps(final_report_json, default=lambda o: float(o) if isinstance(o, (np.float32, np.float64, np.int32, np.int64)) else o.__dict__)
-            reports_collection.insert_one({
-                "user_id": current_user.id,
-                "tool_name": final_report_json.get('tool', tool),
-                "input_data_summary": user_input[:100] if user_input else "N/A",
-                "risk_level": final_report_json.get('risk_level', 'N/A'),
-                "main_finding": final_report_json.get('main_finding', 'Analysis saved, finding unavailable.'),
-                "report_data": report_data_str,
-                "scan_date": datetime.utcnow()
-            })
+            new_report = ScanReport(
+                user_id=current_user.id,
+                tool_name=final_report_json.get('tool', tool),
+                input_data_summary=user_input[:100] if user_input else "N/A",
+                risk_level=final_report_json.get('risk_level', 'N/A'),
+                main_finding=final_report_json.get('main_finding', 'Analysis saved, finding unavailable.'),
+                report_data=report_data_str
+            )
+            db.session.add(new_report)
+            db.session.commit()
         except Exception as e:
+            db.session.rollback()
             logging.error(f"FATAL DB LOGGING ERROR for tool {tool}: {e}")
 
     return jsonify(final_report_json)
 
+
 # --- RUN BLOCK ---
 if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
         
+    # host='0.0.0.0' is the key to multi-device access
     app.run(host='0.0.0.0', port=5000, debug=True)
