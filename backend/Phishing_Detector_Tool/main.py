@@ -1,108 +1,90 @@
 import sys
 import json
-import os
-import random
-from joblib import load
+import re
+import traceback
 from datetime import datetime
-import pandas as pd
-import numpy as np
+import joblib
+import os
 
-# --- CONFIGURATION ---
 TOOL_NAME = "AI Phishing Detector"
-MODEL_DIR = os.path.join(os.path.dirname(__file__), 'model_files')
-MODEL_PATH = os.path.join(MODEL_DIR, 'phishing_model.joblib')
-FEATURES_LIST_PATH = os.path.join(MODEL_DIR, 'phishing_features.joblib')
 
-def load_ml_artifacts():
-    """Loads the trained ML model and the list of expected feature columns."""
-    try:
-        model = load(MODEL_PATH)
-        feature_columns = load(FEATURES_LIST_PATH)
-        return model, feature_columns
-    except FileNotFoundError:
-        # If model files are missing, the tool cannot run.
-        sys.stderr.write(f"FATAL ERROR: Model files not found for {TOOL_NAME}. Did you run train_model.py?\n")
-        sys.exit(1)
-    except Exception as e:
-        sys.stderr.write(f"ERROR loading model artifacts: {e}\n")
-        sys.exit(1)
-
-def run_ml_analysis(model, feature_columns, raw_url):
+def extract_features(url):
     """
-    Simulates the preprocessing and runs the prediction on the loaded model.
-    
-    NOTE: In a production tool, the complex feature extraction logic 
-    (calculating NumDots, UrlLength, etc., from raw_url) MUST happen here.
+    Extracts the EXACT 12 features used during model training in the EXACT same order.
     """
+    url_length = len(url)
+    num_dots = url.count('.')
+    num_dash = url.count('-')
+    at_symbol = 1 if '@' in url else 0
+    tilde_symbol = 1 if '~' in url else 0
+    num_underscore = url.count('_')
+    num_percent = url.count('%')
+    num_ampersand = url.count('&')
+    num_hash = url.count('#')
+    num_numeric_chars = sum(c.isdigit() for c in url)
+    no_https = 0 if url.startswith('https://') else 1
+    ip_address = 1 if re.search(r'\d+\.\d+\.\d+\.\d+', url) else 0
     
-    # --- STEP 1: Feature Extraction/Generation (SIMULATED PLACEHOLDER) ---
-    # This is the single most complex step in a real Phishing Detector tool.
-    # It must analyze the 'raw_url' and generate a dictionary of 50+ numerical features.
-    
-    # We create a placeholder DataFrame (DF) that mirrors the structure used during training.
-    # The values here are randomized just for testing the deployment structure.
-    
-    feature_data = {}
-    for feature in feature_columns:
-        # Simulate generating a plausible numerical value for each feature
-        if 'level' in feature.lower() or 'num' in feature.lower():
-            feature_data[feature] = random.randint(0, 10)
-        elif 'length' in feature.lower():
-            feature_data[feature] = random.randint(30, 200)
-        else: # Assuming boolean or float features
-            feature_data[feature] = random.choice([0.0, 1.0])
-
-    # CRITICAL: Convert the feature dictionary into a Pandas DataFrame in the exact order
-    # This ensures the model receives the features in the same sequence as training.
-    X_predict = pd.DataFrame([feature_data], columns=feature_columns)
-    
-    # --- STEP 2: Prediction ---
-    prediction_array = model.predict(X_predict)
-    prediction = prediction_array[0] # Get the class label (0 or 1)
-    
-    # Get probability/confidence score
-    confidence = model.predict_proba(X_predict).max()
-    
-    # --- STEP 3: Report Generation ---
-    # Assuming 1 = Phishing (Malicious), 0 = Legitimate (Benign)
-    is_phishing = (prediction == 1)
-    
-    risk = "HIGH RISK (Phishing)" if is_phishing else "CLEAN (Legitimate)"
-    
-    finding = f"Predicted as {risk} with {confidence*100:.2f}% confidence."
-
-    return {
-        "tool_prediction": risk,
-        "confidence_score": float(confidence),
-        "risk_level": risk,
-        "main_finding": finding,
-        "advanced_report_details": {
-            "model_type": "Random Forest Classifier",
-            "feature_count": len(feature_columns),
-            "simulated_features_used": True
-        }
-    }
+    return [[
+        url_length, num_dots, num_dash, at_symbol, tilde_symbol, 
+        num_underscore, num_percent, num_ampersand, num_hash, 
+        num_numeric_chars, no_https, ip_address
+    ]]
 
 if __name__ == "__main__":
+    # 1. Check if input was provided
     if len(sys.argv) < 2:
-        sys.stderr.write("ERROR: No URL input provided.\n")
+        print(json.dumps({
+            "tool": TOOL_NAME,
+            "timestamp": str(datetime.now()),
+            "risk_level": "Error",
+            "main_finding": "No URL provided to the script.",
+            "output": "System Error"
+        }))
         sys.exit(1)
+
+    raw_url = sys.argv[1]
+
+    try:
+        # 2. Extract Features
+        feature_values = extract_features(raw_url)
         
-    raw_input_url = sys.argv[1]
-    
-    # Load the model and feature columns
-    model, feature_columns = load_ml_artifacts()
-    
-    # Run the analysis
-    final_report_data = run_ml_analysis(model, feature_columns, raw_input_url)
-    
-    # 3. Print the final JSON report to stdout for app.py to capture
-    report = {
-        "tool": TOOL_NAME,
-        "input_received": raw_input_url,
-        "timestamp": str(datetime.now()),
-        **final_report_data
-    }
-    
-    # Print the full JSON report to stdout
-    print(json.dumps(report, indent=4))
+        # 3. Load Model
+        # Note: Adjust this path if main.py is inside a 'tools' directory (e.g., '../models/phishing_rf_model.pkl')
+        model_path = 'models/phishing_rf_model.pkl' 
+        
+        if not os.path.exists(model_path):
+            raise FileNotFoundError(f"Model not found at '{model_path}'. Please run train_model.py first.")
+            
+        rf_model = joblib.load(model_path)
+        
+        # 4. Predict
+        # CLASS_LABEL 1 = Phishing, 0 = Legitimate
+        prediction = rf_model.predict(feature_values)[0]
+        
+        # Get probability/confidence
+        confidence = rf_model.predict_proba(feature_values)[0][prediction] * 100
+        is_phishing = bool(prediction == 1)
+        
+        # 5. Build Success Report
+        report = {
+            "tool": TOOL_NAME,
+            "input_received": raw_url,
+            "timestamp": str(datetime.now()),
+            "risk_level": "High Risk (Phishing)" if is_phishing else "Safe (Benign)",
+            "main_finding": f"Analyzed URL structure. Model confidence: {confidence:.2f}%",
+            "output": "Phishing Detected" if is_phishing else "Authentic Link"
+        }
+        print(json.dumps(report, indent=4))
+
+    except Exception as e:
+        # Catch ANY error and print the exact reason back to the dashboard
+        error_report = {
+            "tool": TOOL_NAME,
+            "input_received": raw_url,
+            "timestamp": str(datetime.now()),
+            "risk_level": "System Error",
+            "main_finding": f"Python Error: {str(e)}",
+            "output": str(traceback.format_exc())
+        }
+        print(json.dumps(error_report, indent=4))
